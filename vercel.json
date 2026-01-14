@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd ../.. && npx turbo run build --filter=nextjs-template",
+  "outputDirectory": "apps/nextjs-template/.next",
+  "framework": "nextjs",
+  "installCommand": "npm install"
+}
