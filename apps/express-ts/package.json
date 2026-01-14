@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/patch-libsodium.mjs && tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
+    "build": "node scripts/patch-libsodium.mjs && tsc",
+    "start": "node dist/index.js",
     "register": "tsx src/register-agent.ts",
     "setup-collection": "tsx src/scripts/setup-collection.ts",
     "patch": "node scripts/patch-libsodium.mjs"

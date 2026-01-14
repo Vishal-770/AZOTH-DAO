@@ -1,17 +1,25 @@
 {
   "version": 2,
+  "name": "azoth-dao-agent",
   "buildCommand": "npm run build",
-  "installCommand": "npm install",
+  "installCommand": "npm install --legacy-peer-deps",
   "builds": [
     {
-      "src": "package.json",
-      "use": "@vercel/node"
+      "src": "dist/index.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["dist/**", ".well-known/**"]
+      }
     }
   ],
   "routes": [
     {
+      "src": "/.well-known/agent-card.json",
+      "dest": "/.well-known/agent-card.json"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/dist/server.js"
+      "dest": "/dist/index.js"
     }
   ]
 }
