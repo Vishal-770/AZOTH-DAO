@@ -1,0 +1,5 @@
+{
+  "enabledPlugins": {
+    "blockchain-web3@claude-code-workflows": true
+  }
+}

@@ -1,0 +1,4248 @@
+# Inco Documentation - Full LLM-friendly version
+
+This file contains cleaned content of all main documentation pages.
+Last updated: January 2025
+
+────────────────────────────────────────────────────────────
+
+## null
+Source: https://docs.inco.org/architecture/components.md
+
+# null
+
+## Smart Contract Library
+
+The Smart Contract Library extends the EVM with encrypted data types and operations. It is deployed on the host blockchain and provides:
+
+* Encrypted data types (`ebool`, `eaddress`, `euint256`)
+* Arithmetic operations (`e.add`, `e.sub`, `e.mul`, `e.div`, etc.)
+* Comparison operations (`e.eq`, `e.le`, `e.gt`, etc.)
+* Conditional operations (`e.select`)
+* Access Control (`e.allow`)
+
+This library allows developers to write smart contracts that handle encrypted data without modifying the underlying blockchain.
+
+## Confidential Compute Server
+
+The Confidential Compute Server runs inside a Trusted Execution Environment (TEE) and securely handles all confidential operations in the system. It provides a unified service for encrypted computation and decryption, ensuring privacy and integrity for sensitive data and operations.
+
+Key responsibilities:
+
+* Executes confidential computations and decryption requests within a secure enclave
+* Processes encrypted operations triggered by blockchain events
+* Validates access control before performing decryption
+* Monitors the blockchain for requests and returns results directly, without requiring callback transactions
+
+All results and attestations are verified on-chain to guarantee trust and integrity. The Confidential Compute Server streamlines the architecture, providing robust security and reliability for confidential blockchain applications.
+
+## Client-side JavaScript Library
+
+The JavaScript Library provides client-side functionality for interacting with the host chain and Inco:
+
+* Encrypts user inputs using the network's public key
+* Handles ephemeral key and EIP-712 signature generation for decryption requests
+* Decrypts results locally for the user
+
+────────────────────────────────────────────────────────────
+
+## null
+Source: https://docs.inco.org/architecture/decryption-mechanisms.md
+
+# null
+
+Inco provides three types of decryption mechanisms:
+
+* Attested Decrypt for obtaining cryptographic proofs of decryption that can be submitted on-chain
+* Attested Compute for performing computations on encrypted data off-chain with attestation
+* Attested Reveal for decrypting data that has been made publicly accessible
+
+## Attested Decrypt
+
+Used when an authorized user needs a cryptographic proof of decryption that can be selectively revealed on-chain:
+
+1. User requests decryption attestation offchain (via wallet signature or session key)
+2. Client sends request with proof of authorization to decryption network
+3. The decryption network verifies ACL permissions
+4. Each decryption network node decrypts the value and creates a signed attestation
+5. User receives the decryption attestation containing the plaintext and signatures
+6. User can submit the attestation to a smart contract for on-chain verification and use
+
+```mermaid  theme={null}
+sequenceDiagram
+    participant User
+    participant ACL Contract
+    participant Inco Network
+    participant Contract
+
+    User->>User: Sign authorization (wallet/voucher)
+    User->>Inco Network: Request decryption attestation
+    Inco Network->>ACL Contract: Query ACL
+    ACL Contract->>Inco Network: Return permissions
+    Inco Network->>Inco Network: If allowed:
+    Inco Network->>Inco Network: - Decrypt data
+    Inco Network->>Inco Network: - Create signed attestation
+    Inco Network->>User: Return decryption attestation
+    User->>Contract: Submit attestation for verification
+    Contract->>Contract: Verify signatures
+    Contract->>Contract: Use decrypted value
+```
+
+## Attested Compute
+
+Used when you need to perform computations on encrypted data completely off-chain and get a decryption attestation:
+
+1. User requests computation attestation offchain (via wallet signature or session key)
+2. Client sends request with proof of authorization and computation operation to decryption network
+3. The decryption network verifies ACL permissions
+4. Each decryption network node performs the computation on the encrypted data and creates a signed attestation
+5. User receives the computation attestation containing the result and signatures
+6. User can submit the attestation to a smart contract for on-chain verification and use
+
+```mermaid  theme={null}
+sequenceDiagram
+    participant User
+    participant ACL Contract
+    participant Inco Network
+    participant Contract
+
+    User->>User: Sign authorization (wallet/voucher)
+    User->>Inco Network: Request computation attestation
+    Inco Network->>ACL Contract: Query ACL
+    ACL Contract->>Inco Network: Return permissions
+    Inco Network->>Inco Network: If allowed:
+    Inco Network->>Inco Network: - Perform computation on encrypted data
+    Inco Network->>Inco Network: - Create signed attestation
+    Inco Network->>User: Return computation attestation
+    User->>Contract: Submit attestation for verification
+    Contract->>Contract: Verify signatures
+    Contract->>Contract: Use computation result
+```
+
+## Attested Reveal
+
+Used when data has been made publicly accessible and anyone can request decryption attestation:
+
+1. Data is made public using e.reveal() on-chain
+2. Anyone can request decryption attestation offchain
+3. The decryption network verifies the data has been revealed
+4. Each decryption network node decrypts the value and creates a signed attestation
+5. Requester receives the decryption attestation containing the plaintext and signatures
+6. Anyone can submit the attestation to a smart contract for on-chain verification and use
+
+```mermaid  theme={null}
+sequenceDiagram
+    participant User
+    participant Contract
+    participant Inco Network
+
+    Contract->>Contract: e.reveal(handle)
+    User->>Inco Network: Request decryption attestation
+    Inco Network->>Contract: Verify data is revealed
+    Contract->>Inco Network: Confirm revelation
+    Inco Network->>Inco Network: - Decrypt data
+    Inco Network->>Inco Network: - Create signed attestation
+    Inco Network->>User: Return decryption attestation
+    User->>Contract: Submit attestation for verification
+    Contract->>Contract: Verify signatures
+    Contract->>Contract: Use decrypted value
+```
+
+────────────────────────────────────────────────────────────
+
+## null
+Source: https://docs.inco.org/architecture/overview.md
+
+# null
+
+Inco is a confidentiality layer for blockchains that enables privacy-preserving smart contracts without modifying the underlying blockchain. Unlike monolithic privacy solutions, Inco follows a modular approach similar to how SSL/TLS provides security for internet protocols.
+
+> Whitepaper coming soon!
+
+## High-level Components
+
+Inco's architecture consists of three main components that work together to provide confidential computing capabilities:
+
+1. Smart Contract Library
+2. Confidential Compute Server
+3. Client-side JavaScript Library
+
+These components work together to provide a seamless experience for developers building privacy-preserving applications on blockchain. The system handles encrypted data types, performs confidential computations, and manages secure decryption processes while maintaining compatibility with existing EVM blockchains.
+
+────────────────────────────────────────────────────────────
+
+## Best Practices
+Source: https://docs.inco.org/guide/best-practices.md
+
+# Best Practices
+
+> Avoid pitfalls and write secure dapps
+
+To close this concepts guide, here are some best practices to keep in mind when creating your confidential dapps.
+
+## Always check allowance over inputs
+
+As we have seen in the confidential token example, most of your external facing functions
+that expose a confidential input will want to be declared twice like so.
+
+```Solidity  theme={null}
+function transfer(address to, bytes memory valueInput) external returns (ebool) {
+    euint256 value = valueInput.newEuint256(msg.sender);
+    return _transfer(to, value);
+}
+
+function transfer(address to, euint256 value) public returns (ebool success) {
+    require(msg.sender.isAllowed(value), "SimpleConfidentialToken: unauthorized value handle access");
+    return _transfer(to, value);
+}
+```
+
+This is because one function is meant to receive a ciphertext created offchain, and the other is meant to
+be called by smart contracts sending an existing e-variable.
+In the second function, you should always check that the caller has access to the ciphertext handle
+that is passed as an argument. This is done by performing a require over `msg.sender.isAllowed(value)`.
+This is important because the caller may use an existing handle that it has not access to but that the contract
+has access to. In this case, depending on the contract, the caller may be to deduce or gain access to the value in used as input.
+
+## Think in terms of information leakage
+
+When designing an app, you need to be mindful not only to who receives access over the ciphertexts,
+but also about what can be deduced from the information that is publicly available.
+
+For example, if we were to naively port Uniswap pools to Inco,
+we may want to accept confidential input amounts for a swap and send confidential output amounts.
+If the price of the pool is public, then the swapped amount can be deduced by comparing the price before and after the swap.
+
+In another example, if you are holding a secret auction where the current highest bidder is continuously updated,
+one can deduce the current highest bid by submitting increasingly large bids until it becomes the highest bidder.
+
+This kind of possible deductions are called information leakage, and may show up often in your dapps.
+
+## Don't lose access over your ciphertexts
+
+Don't forget to call `e.allowThis()` and `e.allow` after an operation. By default, after the transaction is
+included, no one retains access to the new handles being created and the contract will not be able to compute over them in the future,
+and the user won't be able to see them if not granted access.
+
+## Always verify the intended handle when verifying attestations
+
+When accepting attested decryption or computation results on-chain, always verify that the attestation corresponds to the intended ciphertext handle. This prevents malicious actors from submitting valid attestations for different handles that may have been swapped in transit.
+
+```Solidity  theme={null}
+function SubmitDecryption(
+    DecryptionAttestation memory decryption,
+    bytes[] memory signatures
+) external {
+    require(
+        inco.incoVerifier().isValidDecryptionAttestation(decryption, signatures),
+        "Invalid Signature"
+    );
+    require(euint256.unwrap(randomNumber) == decryption.handle, "Handle mismatch");
+
+    decryptedNumber = uint256(decryption.value);
+}
+```
+
+The signature verification alone is not enough - you must explicitly check that `decryption.handle` matches the specific handle you expect to decrypt.
+
+## Be extra careful of delegatecalls
+
+A contract being delegatecalled can decrypt any ciphertext your contract holds or share access to it.
+
+<Note>
+  Don't hesitate to contact us for any question or if you want to discuss your
+  dapp design. We are also interested in your feedback on this doc.
+</Note>
+
+────────────────────────────────────────────────────────────
+
+## Control Flow
+Source: https://docs.inco.org/guide/control-flow.md
+
+# Control Flow
+
+> Using select and the multiplexer design pattern
+
+Since Inco enables smart contracts to compute over private data without leaking any information,
+two common programming usages can't be used.
+
+1. You can't use an if/else statement with a condition depending on a private value.
+   The flow that the program would take would leak information about the private value.
+
+2. For the same reason you can't revert a transaction based on a condition depending on a private value.
+
+To go around this, we use a pattern called the multiplexer design pattern.
+
+## Multiplexer Design Pattern
+
+The inco equivalent of an if/else statement is the `select` statement.
+The `select` statement takes an encrypted boolean as first argument and two encrypted values as second and third arguments.
+The result of the `select` statement is the second argument if the first argument is true and the third argument otherwise.
+
+Example usage from the confidential token contract:
+
+```Solidity  theme={null}
+function _transfer(address to, euint256 value) internal returns (ebool success) {
+    // we check that the user has enough balance, and assign the result to the ebool success
+    success = balanceOf[msg.sender].ge(value);
+    // we use the select statement to assign the value to be transferred
+    // if the the user has enough balance, we transfer the value
+    // otherwise we assign 0 to the transferred value
+    euint256 transferredValue = success.select(value, uint256(0).asEuint256());
+    // ... rest of the transfer logic
+}
+```
+
+In the confidential token example, instead of reverting if the user has insufficient balance,
+we transfer an amount of 0, which is equivalent to doing nothing. Expect this kind of logic in most confidential apps.
+
+────────────────────────────────────────────────────────────
+
+## Decryption
+Source: https://docs.inco.org/guide/decryption.md
+
+# Decryption
+
+> Overview of decryption flows and access control.
+
+Inco supports multiple ways to turn encrypted handles into plaintext, depending on who should learn the data and where the result must be consumed. This page summarizes the main flows and highlights how access control and signatures keep the data safe.
+
+## Signatures and EIP-712
+
+Attested flows (`attestedDecrypt`, `attestedCompute`) require the user to prove control over their address.\
+The JS SDK does this by asking the user to sign an **EIP-712 message** that binds:
+
+* the caller’s address,
+* the requested operation (decrypt, compute),
+* and the handles / parameters involved in the request.
+
+This ensures that only the address that has on-chain access to a handle (via `e.allow` or `e.reveal`) can request an attestation for it, and prevents a malicious party from replaying or forging decryption/computation requests.
+
+## Attested Decrypt
+
+Use an off-chain covalidator to decrypt a handle for an authorized user and receive a signed attestation of the plaintext. Refer to [Attested Decrypt](../js-sdk/attestations/attested-decrypt) for full examples. High-level flow:
+
+* A contract exposes an encrypted handle (e.g. created with `e.rand()`), and grants access with `e.allow`.
+* The authorized user calls `zap.attestedDecrypt(...)` from the JS SDK, which talks to the covalidator.
+* The response contains the plaintext plus the covalidator signature, enabling the user to post the plaintext back on-chain if needed.
+
+## Attested Reveal
+
+If the contract already called `e.reveal(handle)`, anyone may request an attested decryption because the handle is considered public. See [Attested Reveal](../js-sdk/attestations/attested-reveal). The SDK call `zap.attestedReveal([...handles])` returns plaintexts plus signatures that can be re-submitted on-chain. **Warning:** once `e.reveal` runs, the ciphertext is public forever.
+
+## Attested Compute
+
+Sometimes the goal is to evaluate a predicate (e.g. `creditScore >= 700`) instead of exposing the raw value. [Attested Compute](../js-sdk/attestations/attested-compute) executes the computation off-chain, still requiring the handle to be shared via `e.allow` or `e.reveal`. The SDK call `zap.attestedCompute(...)` returns the result (such as an `ebool`) alongside a covalidator signature so the decision can be verified on-chain without re-running the computation.
+
+────────────────────────────────────────────────────────────
+
+## Access Control
+Source: https://docs.inco.org/guide/guide-access-control.md
+
+# Access Control
+
+> Fully programmable access control over encrypted data
+
+The access control logic is fully programmable and onchain.
+Who has the right to decrypt and see a give ciphertext is visible onchain.
+
+To give access to an account (i.e an address) to a ciphertext, you can use the `e.allow` function.
+This will grant the address permanent access to seeing, publicly decrypting and computing over the ciphertext.
+
+<Note>
+  Since handles are immutable, sharing access to a variable to an account only grants access to the current value of the variable.
+  Whenever the variable is updated, the handle changes and the access to the new handle must be granted again.
+  For example, ou can share your current balance with an address, but if you update your balance, the address will not be able to see the new value.
+</Note>
+
+Example usage from the confidential token contract:
+
+```Solidity  theme={null}
+function _transfer(address to, euint256 value) internal returns (ebool success) {
+    // ... some previous logic
+    // allow the sender to see its new balance
+    senderNewBalance.allow(msg.sender);
+    // allow the receiver to see its new balance
+    receiverNewBalance.allow(to);
+    // allow this contract to be able to compute over the new balances in future transfers
+    senderNewBalance.allowThis();
+    receiverNewBalance.allowThis();
+    // let the caller know if the transfer was successful
+    success.allow(msg.sender);
+}
+```
+
+`e.allowThis(value)` is an alias for `e.allow(value, address(this))`.
+
+A common mistake is to forget to call `allowThis` on a variable after updating it.
+This will result in the contract being unable to compute over the variable in future transactions.
+
+<Warning>
+  Always call `e.allowThis` after updating a variable, if this variable will be used in your contract again.
+</Warning>
+
+### Transient Allowance
+
+<Note>
+  `e.transientAllow` is not yet available in the SDK, but coming very soon.
+</Note>
+
+A transient allowance is an allowance that is valid only for the current transaction.
+All results of operations such as `e.add` are transiently allowed to be decrypted by the contract who called the operation.
+That is why contracts can perform back to back operations using results of previous operations.
+But since this allowance is transient, calling `e.allowThis` is necessary to allow the contract to compute over the result in future transactions.
+
+### How to reason about access
+
+The correct way to think of access control is to consider that each account (i.e any address of EOA/contract/smart wallet)
+that received access to a ciphertext at some point, either transiently or permanently,
+knows its value, has stored it, and may compute over it.
+Note that once the access over a ciphertext is shared, the receiving account may share it with any other account, or publicly decrypt it.
+Be very mindful of the access you grant over your ciphertexts in your apps, and don't consider transient allowances to be "safer" in any way than permanent ones.
+
+────────────────────────────────────────────────────────────
+
+## Handles
+Source: https://docs.inco.org/guide/handles.md
+
+# Handles
+
+> Unique Identifier for an immutable piece of hidden data
+
+## E-Types
+
+At the top of the confidential token implementation, we can see that we are importing new types of variables:
+
+```Solidity  theme={null}
+import {euint256, ebool, eaddress, e} from "@inco/lightning/Lib.sol";
+```
+
+`euint256`, `ebool`, and `eaddress` are the hidden counterparts of `uint256`, `bool`, and `address`, respectively.
+They are used to represent hidden values in the contract.
+The `e`- types are the hidden counterparts of the standard types in Solidity.
+
+In our token example, the user balances are notably represented as `euint256`:
+
+```Solidity  theme={null}
+mapping(address => euint256) public balanceOf;
+```
+
+If we look into Inco's library, we can see how `euint256` and `ebool` are defined:
+
+```Solidity  theme={null}
+type euint256 is bytes32;
+type ebool is bytes32;
+type eaddress is bytes32;
+```
+
+If we try looking up on a block explorer the raw value returned by calling `balanceOf`, we will get something like:
+
+```
+0xa8d84064218bfc979af10dccc8153c9ab8a15068c3d64cb63927aca8ad1a3c9c
+```
+
+This gibberish value gives us no information about the actual balance of the user.
+
+## What is a Handle?
+
+A handle is a unique identifier for an immutable piece of hidden data.
+In our token example, the balance of each user is represented as a handle, `ebool success`, `euint256 value`, etc. are also handles.
+The onchain smart contract is manipulating identifiers for a piece of hidden data (a balance, a boolean, etc.),
+and the actual data is safely stored offchain in an encrypted manner.
+Whenever an operation is performed over encrypted data types, the result is also a handle, like so:
+
+```Solidity  theme={null}
+euint256 senderNewBalance = balanceOf[msg.sender].sub(transferredValue);
+```
+
+A handle is immutable. If we were to reassigning a variable like so:
+
+```Solidity  theme={null}
+balanceOf[msg.sender] = balanceOf[msg.sender].sub(transferredValue);
+```
+
+`balanceOf[msg.sender]` would get assigned a new handle.
+It is important to keep in mind that the handle representing the old balance still exists,
+and still corresponds to the encrypted value of the old balance, even if the contract is not keeping track of it.
+We will see later in this guide that the value of handles are never lost and can still be accessed.
+From Inco's standpoint, handles get created but never deleted.
+
+────────────────────────────────────────────────────────────
+
+## Inputs
+Source: https://docs.inco.org/guide/input.md
+
+# Inputs
+
+> How to input external values and convert them to handles
+
+```Solidity  theme={null}
+import {euint256, ebool, eaddress, e} from "@inco/lightning/src/Lib.sol";
+using e for *;
+```
+
+### Case 1: the value comes from an offchain source
+
+In the confidential transfer example, the first external method is meant to be called by an EOA / Smart account.
+It is using `newEuint256` to convert the input value into a handle.
+
+```Solidity  theme={null}
+function transfer(
+        address to,
+        bytes memory valueInput
+    ) external payable returns (ebool) {
+        // Muliplied with one cause we consumed only one ciphertext i.e called `newEuint256` once
+        require(msg.value >= inco.getFee() * 1, "Fee Not Paid");
+        // This call needs the above fee otherwise it will fail
+        euint256 value = valueInput.newEuint256(msg.sender);
+        // stuff
+    }
+```
+
+`newEuint256` takes two arguments, the encrypted input value (in the form of `bytes`) and the address of the account doing the input (here `msg.sender`).
+This account should always be the one that created the input, it will be given decryption right over the handle.
+Passing another address than the user doing the input would be a malicious implementation.
+
+Similarly, `newEaddress` can be used to convert encrypted address inputs into handles:
+
+```Solidity  theme={null}
+function setAuthorizedAddress(
+    bytes memory addressInput
+) external payable {
+    require(msg.value >= inco.getFee() * 1, "Fee Not Paid");
+    eaddress authorizedAddr = addressInput.newEaddress(msg.sender);
+    // stuff
+}
+```
+
+`newEaddress` works identically to `newEuint256` but creates an `eaddress` handle instead of an `euint256` handle. It requires the same fee payment and follows the same security principles regarding the originating account.
+
+For boolean inputs, `newEbool` can be used to convert encrypted boolean inputs into handles:
+
+```Solidity  theme={null}
+function setFlag(
+    bytes memory flagInput
+) external payable {
+    require(msg.value >= inco.getFee() * 1, "Fee Not Paid");
+    ebool flag = flagInput.newEbool(msg.sender);
+    // stuff
+}
+```
+
+`newEbool` works identically to `newEuint256` but creates an `ebool` handle instead of an `euint256` handle. It requires the same fee payment and follows the same security principles regarding the originating account.
+
+`valueInput` has to be a ciphertext, meaning it has to be the value intended to be transferred,
+encrypted in a way that Inco can understand. To do this, you can use the `encrypt` method from the [JavaScript SDK](https://docs.inco.org/js-sdk/existing-project#1-encrypt-a-value).
+
+If the `bytes memory valueInput` is malformed, Inco will fallback to the handle default value.
+The default value of `euint256` is `0`, and the default value of `ebool` is `false`.
+
+<Note>
+  **Note:** Consuming encrypted inputs on-chain requires paying an encryption fee per ciphertext (**newEuint256**).
+  Ensure `msg.value >= inco.getFee() × ciphertextCount`, otherwise the call will revert.
+</Note>
+
+<Note>
+  After `newEuint256` has been used, the resulting handle can be used immediately, there is no need
+  for Inco to issue a confirmation to start using it in the contract logic. Inco will decrypt
+  the corresponding ciphertext safely inside its TEE after the transaction has been included onchain.
+  All operations onchain are performed virtually over identifiers,  and reproduced over the actual
+  values by Inco asynchronously. We call this model "symbolic execution".
+</Note>
+
+<Note>
+  One could try to reuse the same ciphertext as another user to gain decryption
+  access over it. Our JS SDK embeds context information in the ciphertext
+  (originating account, chain, contract), and the value of the created handle
+  will fallback to the default if it is used in another context.
+</Note>
+
+### Case 2 : the value comes from a variable
+
+A known value can be turned into a handle using the `asEuint256` method.
+This is sometimes called performing a "trivial encrypt" because the resulting handle will be of a known value.
+We can see it in the constructor of the token example:
+
+```Solidity  theme={null}
+constructor() {
+    balanceOf[msg.sender] = uint256(1000 * 1e9).asEuint256();
+}
+```
+
+Anyone can see that the initial value of `balanceOf[msg.sender]` is `1000 * 1e9`,
+but after the deployer sends a few transfers, its balance will be unknown to the public.
+
+Similarly, known boolean values can be converted using `asEbool`:
+
+```Solidity  theme={null}
+constructor() {
+    isActive = true.asEbool();
+}
+```
+
+────────────────────────────────────────────────────────────
+
+## Concepts Guide Introduction
+Source: https://docs.inco.org/guide/intro.md
+
+# Concepts Guide Introduction
+
+> Walkthrough all the concepts you need to know to get started with Inco
+
+## Welcome
+
+This guide will get you up to speed on all the concepts you need to know to develop your first confidential dapp.
+Throughout this guide, we will be using several examples, the most common one being a confidential token.
+A confidential token behaves similarly to a regular ERC20 token, but the balances of the holders, and transfer amounts are hidden from the public.
+
+Here is the full code of a simple confidential token contract:
+
+```Solidity  theme={null}
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8;
+
+import {euint256, ebool, e} from "@inco/lightning/Lib.sol";
+
+contract SimpleConfidentialToken {
+    using e for *;
+
+    mapping(address => euint256) public balanceOf;
+
+    constructor() {
+        balanceOf[msg.sender] = uint256(1000 * 1e9).asEuint256();
+    }
+
+    function transfer(
+        address to,
+        bytes memory valueInput
+    ) external returns (ebool) {
+        euint256 value = valueInput.newEuint256(msg.sender);
+        return _transfer(to, value);
+    }
+
+    function transfer(
+        address to,
+        euint256 value
+    ) public returns (ebool success) {
+        require(
+            msg.sender.isAllowed(value),
+            "SimpleConfidentialToken: unauthorized value handle access"
+        );
+
+        return _transfer(to, value);
+    }
+
+    function _transfer(
+        address to,
+        euint256 value
+    ) external returns (ebool success) {
+        success = balanceOf[msg.sender].ge(value);
+        euint256 transferredValue = success.select(
+            value,
+            uint256(0).asEuint256()
+        );
+
+        euint256 senderNewBalance = balanceOf[msg.sender].sub(transferredValue);
+        euint256 receiverNewBalance = balanceOf[to].add(transferredValue);
+
+        balanceOf[msg.sender] = senderNewBalance;
+        balanceOf[to] = receiverNewBalance;
+
+        senderNewBalance.allow(msg.sender);
+        receiverNewBalance.allow(to);
+        senderNewBalance.allowThis();
+        receiverNewBalance.allowThis();
+    }
+}
+```
+
+Continue this guide to understand how this code works and its concepts.
+
+────────────────────────────────────────────────────────────
+
+## Operations
+Source: https://docs.inco.org/guide/operations.md
+
+# Operations
+
+> Compute over private state
+
+Inco exposes mathematical and logical operations over encrypted data.
+Note that for each operation that takes 2 arguments (i.e binary types below), you can use either an e-type or a regular
+variable as the first or second argument. Each operation returns a single e-type as result.
+
+<Note>
+  Under the hood, all operations are performing a call to the Inco contract
+  singleton. The Inco contract checks access control rules and emits an event
+  for each operation
+</Note>
+
+### Example usage
+
+```Solidity  theme={null}
+euint256 a = e.asEuint256(2);
+euint256 b = e.asEuint256(3);
+euint256 c = a.add(b); // c = 5 (encrypted)
+```
+
+### Supported math operations
+
+All these operations return an `euint256`.
+
+| Name           | Function | Type   |
+| -------------- | -------- | ------ |
+| Addition       | `e.add`  | Binary |
+| Subtraction    | `e.sub`  | Binary |
+| Multiplication | `e.mul`  | Binary |
+| Division       | `e.div`  | Binary |
+| Remainder      | `e.rem`  | Binary |
+| BitAnd         | `e.and`  | Binary |
+| BitOr          | `e.or`   | Binary |
+| BitXor         | `e.xor`  | Binary |
+| Shift Right    | `e.shr`  | Binary |
+| Shift Left     | `e.shl`  | Binary |
+| Rotate Right   | `e.rotr` | Binary |
+| Rotate Left    | `e.rotl` | Binary |
+
+### Supported comparison operations
+
+| Name                  | Function | Type   | Returns  |
+| --------------------- | -------- | ------ | -------- |
+| Equal                 | `e.eq`   | Binary | ebool    |
+| Not equal             | `e.ne`   | Binary | ebool    |
+| Greater than or equal | `e.ge`   | Binary | ebool    |
+| Greater than          | `e.gt`   | Binary | ebool    |
+| Less than or equal    | `e.le`   | Binary | ebool    |
+| Less than             | `e.lt`   | Binary | ebool    |
+| Min                   | `e.min`  | Binary | euint256 |
+| Max                   | `e.max`  | Binary | euint256 |
+| Not                   | `e.not`  | Unary  | ebool    |
+
+### Random number generation
+
+```Solidity  theme={null}
+euint256 randomNumber = e.rand();
+euint256 boundedRandom = e.randBounded(100); // Random number in [0, 100)
+euint256 boundedRandomEncrypted = e.randBounded(encryptedUpperBound); // With encrypted upper bound
+```
+
+| Name           | Function                             | Type  | Returns  |
+| -------------- | ------------------------------------ | ----- | -------- |
+| Random         | `e.rand()`                           | Unary | euint256 |
+| Random Bounded | `e.randBounded(uint256 upperBound)`  | Unary | euint256 |
+| Random Bounded | `e.randBounded(euint256 upperBound)` | Unary | euint256 |
+
+### Type conversion functions
+
+Convert between regular types and encrypted types, or between different encrypted types.
+
+```Solidity  theme={null}
+euint256 a = e.asEuint256(42);
+ebool b = e.asEbool(true);
+eaddress c = e.asEaddress(0x123...);
+ebool d = e.asEbool(encryptedUint); // Cast from euint256
+euint256 e = e.asEuint256(encryptedBool); // Cast from ebool
+```
+
+| Name                   | Function                  | Type  | Returns  |
+| ---------------------- | ------------------------- | ----- | -------- |
+| Convert to euint256    | `e.asEuint256(uint256 a)` | Unary | euint256 |
+| Convert to ebool       | `e.asEbool(bool a)`       | Unary | ebool    |
+| Convert to eaddress    | `e.asEaddress(address a)` | Unary | eaddress |
+| Cast euint256 to ebool | `e.asEbool(euint256 a)`   | Unary | ebool    |
+| Cast ebool to euint256 | `e.asEuint256(ebool a)`   | Unary | euint256 |
+
+### Reveal functions
+
+Reveal encrypted values (decrypt and make public).
+
+```Solidity  theme={null}
+e.reveal(encryptedUint);
+e.reveal(encryptedBool);
+e.reveal(encryptedAddress);
+```
+
+| Name   | Function               | Type  | Returns |
+| ------ | ---------------------- | ----- | ------- |
+| Reveal | `e.reveal(euint256 a)` | Unary | void    |
+| Reveal | `e.reveal(ebool a)`    | Unary | void    |
+| Reveal | `e.reveal(eaddress a)` | Unary | void    |
+
+### Additional type support
+
+**Comparison operations** (`e.eq` and `e.ne`) also support `eaddress` comparisons in addition to `euint256`.
+
+**Bitwise operations** (`e.and`, `e.or`, `e.xor`) also support `ebool` operations in addition to `euint256`.
+
+────────────────────────────────────────────────────────────
+
+## EList (Preview)
+Source: https://docs.inco.org/guide/preview/elist.md
+
+# EList (Preview)
+
+## Before you start
+
+Import the `ePreview` library:
+
+```solidity  theme={null}
+import {ePreview, elist, ETypes} from "@inco/lightning-preview/src/Preview.Lib.sol";
+import {euint256, ebool, e, inco} from "@inco/lightning/src/Lib.sol";
+```
+
+## Important: Fee Payments and Access Control
+
+<Note>
+  **Fee Payments**: Most elist operations that consume encrypted inputs require paying fees. When calling `ePreview.newEList()`, ensure `msg.value >= inco.getFee() * ciphertextCount`. Operations like `shuffle()` and `shuffledRange()` also require fee payment.
+</Note>
+
+<Note>
+  **Access Control**: After creating or modifying an elist, you must explicitly grant access permissions using `inco.allow()` to allow addresses to decrypt the list contents. Always allow both the contract and the user who needs access:
+
+  ```solidity  theme={null}
+  inco.allow(elist.unwrap(myList), address(this));
+  inco.allow(elist.unwrap(myList), msg.sender);
+  ```
+</Note>
+
+## Creating new empty EList
+
+`newEList(type)` creates a new empty list and returns a new elist handle. Type must be specified ahead of time and can not be changed.
+
+Here is an example of how to create a new EList holding `euint256` values:
+
+```solidity  theme={null}
+elist myList = ePreview.newEList(ETypes.Uint256);
+// myList = E([])
+```
+
+<Note>
+  Note: Each elist handle is IMMUTABLE, so a handle will forever point to a particular list of values. Any operation on a list will return a new handle pointing to a new list, leaving the original list unchanged.
+</Note>
+
+Arguments:
+
+* ETypes listType - Type of each element in the list. This can not be changed
+
+Returns:
+
+* Elist - a new elist handle
+
+## Creating new EList from existing handles
+
+`newEList(handles, type)` creates a new list from existing list of handles and returns a new elist handle. Type must be specified ahead of time and can not be changed.
+Handles type must match the type of the list container, otherwise it will revert.
+
+Here is an example of how to create a new EList from existing `euint256` handles:
+
+```solidity  theme={null}
+bytes32[] memory handles = new bytes32[](5);
+for (uint256 i = 0; i < 5; i++) {
+    handles[i] = euint256.unwrap(e.asEuint256(i + 1));
+}
+elist myList = ePreview.newEList(handles, ETypes.Uint256);
+// myList = E([1, 2, 3, 4, 5])
+```
+
+Arguments:
+
+* bytes32\[] handles - An array of handles to create a new list from
+* ETypes listType - Type of each element in the list. This can not be changed and must match the type of each handle in the array.
+
+Returns:
+
+* Elist - A new elist handle
+
+## Length
+
+`length(list)` returns the length of the list in plaintext. It's a pure function that doesn't require any gas to call.
+
+```solidity  theme={null}
+uint16 len = ePreview.length(myList);
+// len == 5
+```
+
+<Note>
+  Note: It is IMPORTANT to keep in mind that the length of the elist is ALWAYS PUBLIC and encoded inside the returning handle itself. It's an intentional design choice to make contract behavior more predictable at a cost of leaking the length of the list, because it can (for the most part) always be predicted by looking at history of on-chain operations.
+</Note>
+
+Arguments:
+
+* elist list - list to read length from
+
+Returns:
+
+* uint16 len - length of the list in plaintext
+
+## ListTypeOf
+
+`listTypeOf(list)` returns the type of elements contained in the list. It's a view function that doesn't require any gas to call.
+
+```solidity  theme={null}
+function listTypeOf() public view returns (ETypes) {
+    return ePreview.listTypeOf(list);
+}
+// Returns ETypes.Uint256 or ETypes.Bool
+```
+
+Arguments:
+
+* elist list - list to read type from
+
+Returns:
+
+* ETypes - the type of elements in the list (e.g., `ETypes.Uint256`, `ETypes.Bool`)
+
+## Creating new EList from user inputs
+
+Sometimes it's desired to create an elist from user inputs directly, like from a javascript dApp. `newEList(inputs, type, user)` can take an array of user encrypted ciphertexts and returns a new elist handle. Expected type must be specified ahead of time and can not be changed.
+Handles type must match the type of the list container, otherwise it will revert.
+
+Here is a complete example of how to create a new EList from user encrypted inputs:
+
+```solidity  theme={null}
+function newEList(bytes[] memory inputs, ETypes listType, address user)
+    public
+    payable
+    returns (elist)
+{
+    require(msg.value >= inco.getFee() * inputs.length, "Fee not paid");
+    elist list = ePreview.newEList(inputs, listType, user);
+    inco.allow(elist.unwrap(list), address(this));
+    inco.allow(elist.unwrap(list), msg.sender);
+    return list;
+}
+```
+
+Arguments:
+
+* bytes\[] ciphertexts - An array of encrypted user inputs to create a new list from
+* ETypes listType - Expected type of each element in the list. This can not be changed and must match the type of each handle in the array.
+* address user - Address of the owner of the inputs, used to decrypt ciphertexts.
+
+Returns:
+
+* elist - A new elist handle
+
+## Append
+
+`append(list, value)` appends an `euint256` or `ebool` element type at the end of an array, returning a new modified list handle.
+
+Example usage:
+
+```solidity  theme={null}
+function listAppend(bytes memory ctValue) public payable returns (elist) {
+    require(msg.value >= inco.getFee(), "Fee not paid");
+    euint256 handle = e.newEuint256(ctValue, msg.sender);
+    inco.allow(euint256.unwrap(handle), address(this));
+    inco.allow(euint256.unwrap(handle), msg.sender);
+    list = ePreview.append(list, handle);
+    inco.allow(elist.unwrap(list), address(this));
+    inco.allow(elist.unwrap(list), msg.sender);
+    return list;
+}
+// [].append(5) == [5]
+```
+
+Arguments:
+
+* elist list - An elist handle to append to
+* euint256/ebool value - Element value to be appended to the list. Must match the elist type.
+
+Returns:
+
+* elist - A new elist handle
+
+## Insert
+
+`insert(list, i, value)` inserts a hidden element at a desired hidden position, returns a new modified list. Index can be both plaintext or encrypted.
+
+<Warning>
+  Note however that if index is out of range, it works similarly to append() and appends element at the end of the list.
+</Warning>
+
+Example usage:
+
+```solidity  theme={null}
+elist myList = ePreview.newEList(ETypes.Uint256);
+elist myNewList = ePreview.append(l, e.asEuint256(10));
+euint256 el = e.asEuint256(5);
+
+elist insertedList = ePreview.insert(myNewList, uint256(0), el);
+// [10].insert(0, 5) == [5, 10]
+```
+
+Arguments:
+
+* elist A - An elist handle to insert to
+* euint256/uint256 i - Index position to insert at, can be both encrypted or plaintext.
+* euint256/ebool B - Element value to be inserted to the list. Must match the elist type.
+
+Returns:
+
+* Elist - A new elist handle
+
+## Get
+
+`getEuint256(list, index)` and `getEbool(list, index)` return the hidden element at a plaintext position. These methods have separate names due to Solidity function overloading limitations.
+
+Example usage:
+
+```solidity  theme={null}
+function listGet(uint16 index) public returns (euint256) {
+    euint256 res = ePreview.getEuint256(list, index);
+    inco.allow(euint256.unwrap(res), msg.sender);
+    return res;
+}
+
+function boolListGet(uint16 index) public returns (ebool) {
+    ebool res = ePreview.getEbool(boolList, index);
+    inco.allow(ebool.unwrap(res), msg.sender);
+    return res;
+}
+```
+
+Arguments:
+
+* elist list - elist handle to get element from
+* uint16 index - Plaintext index position to get element at
+
+Returns:
+
+* euint256 or ebool - The encrypted value at the specified index
+
+## GetOr
+
+`getOr(list, i, default)` return hidden element at hidden position. Index can be either encrypted or plaintext.
+Returns a handle to the hidden element if the index is within range, otherwise returns the default value.
+
+Example usage:
+
+```solidity  theme={null}
+function listGetOr(bytes memory ctIndex, bytes memory ctDefaultValue)
+    public
+    payable
+    returns (euint256)
+{
+    require(msg.value >= inco.getFee() * 2, "Fee not paid");
+    euint256 index = e.newEuint256(ctIndex, msg.sender);
+    euint256 defaultValue = e.newEuint256(ctDefaultValue, msg.sender);
+    euint256 res = ePreview.getOr(list, index, defaultValue);
+    inco.allow(euint256.unwrap(res), msg.sender);
+    return res;
+}
+// [5, 10].getOr(1, 0) == 10
+```
+
+Arguments:
+
+* elist list - elist handle to get element at
+* euint256/uint256 index - Index position to get element at. Can be either plaintext or encrypted.
+* euint256/ebool default - A default element value to be returned if index is out of range. Must match the elist type.
+
+Returns:
+
+* euint256/ebool - The encrypted value at the specified index, or the default value if out of range
+
+## Set
+
+`set(list, i, value)` replaces an element at hidden index and returns a new modified list. Index can be either plaintext or encrypted.
+
+<Warning>
+  Note: If index is out of range, the element is appended to the end of the list.
+</Warning>
+
+Example usage:
+
+```solidity  theme={null}
+elist myList = ePreview.newEList(ETypes.Uint256);
+elist myNewList1 = ePreview.append(myList, e.asEuint256(5));
+elist myNewList2 = ePreview.append(myNewList1, e.asEuint256(10));
+euint256 index = e.asEuint256(1);
+euint256 newValue = e.asEuint256(2);
+
+euint256 ten = ePreview.set(myNewList2, index, newValue);
+// [5, 10].set(1, 2) == [5, 2]
+```
+
+Arguments:
+
+* elist A - elist handle to modify element in
+* euint256/uint256 i - index position of element to modify. Can be either plaintext or encrypted.
+* euint256/ebool B - element value to be changed if index is within range. Element will be appended to the list if the index is out of range. Must match the elist type.
+
+Returns:
+
+* Elist - a new elist handle
+
+## Concat
+
+`concat(list_a, list_b)` concatenates two elists into one, returns a new concatenated elist. The length of the new list will be length(list1)+length(list2)
+
+Example usage:
+
+```solidity  theme={null}
+elist myList = ePreview.newEList(ETypes.Uint256);
+elist myNewList1 = ePreview.append(myList, e.asEuint256(5));
+elist myNewList2 = ePreview.append(myNewList1, e.asEuint256(10));
+
+elist jointList = ePreview.concat(myNewList2, myNewList2);
+// [5, 10].concat([5, 10]) == [5, 10, 5, 10]
+```
+
+Arguments:
+
+* elist list\_a - elist handle to be prepended
+* elist list\_b - elist handle to be appended
+
+Returns:
+
+* Elist - a new elist handle containing elements from both A and B
+
+## Slice
+
+`slice(list, start, end)` is like in any other language that takes in start and end both in plaintext. Returns a new sliced list of length "end-start".
+If start and end are out of bounds, it will revert. The end index must be greater than the start index.
+
+Example usage:
+
+```solidity  theme={null}
+elist myList = ePreview.newEList(ETypes.Uint256);
+elist myNewList1 = ePreview.append(myList, e.asEuint256(5));
+elist myNewList2 = ePreview.append(myNewList1, e.asEuint256(10));
+elist myNewList3 = ePreview.append(myNewList2, e.asEuint256(15));
+
+elist slicedList = ePreview.slice(myNewList3, 1, 3);
+// [5, 10, 15].slice(1, 3) == [10, 15]
+```
+
+Arguments:
+
+* elist A - elist handle to be sliced
+* uint16 start - Start index of the slice, in plaintext.
+* uint16 end - End index of the slice, in plaintext. Must be greater than start and within the bounds of the list length.
+
+Returns:
+
+* Elist - a new sliced list with a new length of "end-start"
+
+## SliceLen
+
+`sliceLen(list, E(start), len, defaultValue)` is a variant of slice() but allows to slice at some hidden index specifying a length instead of end position. Returns a new sliced list of the specified length.
+
+<Warning>
+  Note that if the encrypted start position is out of bounds, the resulting list will be filled with the provided default value.
+</Warning>
+
+Example usage:
+
+```solidity  theme={null}
+function listSlice(bytes memory ctStart, uint16 len, bytes memory ctDefaultValue)
+    public
+    payable
+    returns (elist)
+{
+    require(msg.value >= inco.getFee() * 2, "Fee not paid");
+    euint256 start = e.newEuint256(ctStart, msg.sender);
+    euint256 defaultValue = e.newEuint256(ctDefaultValue, msg.sender);
+    list = ePreview.sliceLen(list, start, len, defaultValue);
+    inco.allow(elist.unwrap(list), address(this));
+    inco.allow(elist.unwrap(list), msg.sender);
+    return list;
+}
+// [5, 10, 15].sliceLen(1, 2, 0) == [10, 15]
+```
+
+Arguments:
+
+* elist list - elist handle to be sliced
+* euint256 start - Encrypted start index of the slice
+* uint16 len - Length of the desired slice
+* euint256/ebool defaultValue - Default value to use if start position is out of bounds. Must match the elist type.
+
+Returns:
+
+* elist - a new sliced list with the specified length
+
+## Range
+
+`range(start, end)` creates a new list (or a "set") and populates it with ordered values from within range. The length of the new list will be equal to "end-start".
+
+Example usage:
+
+```solidity  theme={null}
+elist myList = ePreview.range(0, 5);
+// myList = E([0, 1, 2, 3, 4])
+```
+
+Arguments:
+
+* uint16 start - Start value of the range, inclusive.
+* uint16 end - End of the range, exclusive. Must be greater than start.
+
+Returns:
+
+* Elist - a new elist handle containing elements from start to end-1 with the length of "end-start"
+
+## Reverse
+
+`reverse(list)` reverses elements in a list, first element becomes last, and so on.
+
+Example usage:
+
+```solidity  theme={null}
+elist myList = ePreview.newEList(ETypes.Uint256);
+elist myNewList1 = ePreview.append(myList, e.asEuint256(5));
+elist myNewList2 = ePreview.append(myNewList1, e.asEuint256(10));
+
+elist reversedList = ePreview.reverse(myNewList2);
+// [5, 10].reverse() == [10, 5]
+```
+
+Arguments:
+
+* elist A - elist handle to be reversed
+
+Returns:
+
+* Elist - a new elist handle with elements in reverse order
+
+## Shuffle
+
+`shuffle(list)` deterministically shuffles elements within a list, returning a new shuffled list with the same length. This operation requires fee payment.
+
+Example usage:
+
+```solidity  theme={null}
+function listShuffle() public payable returns (elist) {
+    require(msg.value >= inco.getFee(), "Fee not paid");
+    list = ePreview.shuffle(list);
+    inco.allow(elist.unwrap(list), address(this));
+    inco.allow(elist.unwrap(list), msg.sender);
+    return list;
+}
+// [5, 10].shuffle() could return [10, 5] or [5, 10] randomly
+```
+
+Arguments:
+
+* elist list - elist handle to be shuffled
+
+Returns:
+
+* elist - a new elist handle with elements shuffled where each element is equally likely to be in any position in the new list.
+
+## ShuffledRange
+
+`shuffledRange(start, end)` is a convenience function combining range() and shuffle() from example above into one function. It creates a range of elements from start to end, unlike range() the resulting elist is unordered and completely random. This operation requires fee payment.
+
+Example usage:
+
+```solidity  theme={null}
+function listShuffledRange(uint16 start, uint16 end) public payable returns (elist) {
+    require(msg.value >= inco.getFee(), "Fee not paid");
+    elist newRangeList = ePreview.shuffledRange(start, end);
+    inco.allow(elist.unwrap(newRangeList), address(this));
+    inco.allow(elist.unwrap(newRangeList), msg.sender);
+    return newRangeList;
+}
+// shuffledRange(1, 53) = E([42, 7, 19, 33, ...])
+```
+
+Arguments:
+
+* uint16 start - Start value of the range, inclusive.
+* uint16 end - End of the range, exclusive. Must be greater than start.
+
+Returns:
+
+* elist - a new elist handle containing elements from start to end-1 with the length of "end-start" in a random order.
+
+────────────────────────────────────────────────────────────
+
+## Try Preview Features
+Source: https://docs.inco.org/guide/preview/intro.md
+
+# Try Preview Features
+
+> Get early access to experimental features in the Inco Lightning SDK
+
+## Overview
+
+Preview features are experimental functionalities that are still under development. These features allow you to test and provide feedback on upcoming capabilities before they're officially released.
+
+<Note>
+  **Important**: Preview features are experimental and may have breaking changes. They are not recommended for production use.
+</Note>
+
+## Installation
+
+### Step 1: Add to package.json
+
+Add the Lightning Preview SDK and override to your `package.json`:
+
+```json  theme={null}
+{
+  "dependencies": {
+    "@inco/lightning-preview": "0.7.10",
+    "@inco/lightning": "0.7.10",
+  },
+  "overrides": {
+    "@inco/lightning": "0.7.10"
+  }
+}
+```
+
+### Step 2: Install Dependencies
+
+Run your package manager's install command to apply the changes:
+
+<CodeGroup>
+  ```bash npm theme={null}
+  npm install
+  ```
+
+  ```bash yarn theme={null}
+  yarn install
+  ```
+
+  ```bash bun theme={null}
+  bun install
+  ```
+</CodeGroup>
+
+## Usage in Smart Contracts
+
+Import the preview library in your Solidity contracts:
+
+```solidity  theme={null}
+import {ePreview, elist, ETypes} from "@inco/lightning-preview/src/Preview.Lib.sol";
+import {euint256, ebool, e, inco} from "@inco/lightning/src/Lib.sol";
+```
+
+## Available Preview Features
+
+### EList (Encrypted Lists)
+
+EList provides encrypted list operations for building confidential applications that require dynamic array-like data structures.
+
+[Learn more about EList →](./elist)
+
+────────────────────────────────────────────────────────────
+
+## Verifying Attestations
+Source: https://docs.inco.org/guide/verifying-attestations.md
+
+# Verifying Attestations
+
+> Verify attested decrypt, reveal, and compute responses in Solidity.
+
+Attested flows (`attestedDecrypt`, `attestedCompute`, `attestedReveal`) allow wallets to convert an encrypted handle into plaintext or a computed result. This page shows how to plug those responses into Solidity, verify the covalidator signatures, and bind attestations to the expected handles.
+
+## DecryptionAttestation Structure
+
+```solidity  theme={null}
+struct DecryptionAttestation {
+    bytes32 handle;
+    bytes32 value;
+}
+```
+
+## Attested Decrypt
+
+**Off-chain (JS SDK):**
+
+<Tabs>
+  <Tab title="example.ts">
+    ```typescript  theme={null}
+    import { getContract } from "viem";
+    import { gatedAccessAbi } from "./abi";
+    import { walletClient } from "./client";
+
+    // 1. Create contract instance
+    const contract = getContract({
+      address: "0x...", // Replace with your deployed contract address
+      abi: gatedAccessAbi,
+      client: walletClient,
+    });
+
+    // 2. Use attested decrypt and call contract
+    const results = await zap.attestedDecrypt(walletClient, [handleHex]);
+    const { handle, plaintext, covalidatorSignatures } = results[0];
+    const { value } = plaintext;
+
+    await contract.write.gatedAction([
+      {
+        handle,
+        value,
+      },
+      covalidatorSignatures,
+    ]);
+    ```
+  </Tab>
+
+  <Tab title="client.ts">
+    ```typescript  theme={null}
+    import { createWalletClient, http } from "viem";
+    import { baseSepolia } from "viem/chains";
+    import { Lightning, supportedChains } from "@inco/js";
+
+    export const walletClient = createWalletClient({
+      chain: baseSepolia,
+      transport: http(),
+    });
+
+    export const zap = await Lightning.latest(
+      "testnet",
+      supportedChains.baseSepolia
+    );
+    ```
+  </Tab>
+
+  <Tab title="abi.ts">
+    ```typescript  theme={null}
+    export const gatedAccessAbi = [
+      {
+        inputs: [
+          {
+            components: [
+              {
+                internalType: "bytes32",
+                name: "handle",
+                type: "bytes32",
+              },
+              {
+                internalType: "bytes32",
+                name: "value",
+                type: "bytes32",
+              },
+            ],
+            internalType: "struct DecryptionAttestation",
+            name: "decryption",
+            type: "tuple",
+          },
+          {
+            internalType: "bytes[]",
+            name: "signatures",
+            type: "bytes[]",
+          },
+        ],
+        name: "gatedAction",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+      },
+    ] as const;
+    ```
+  </Tab>
+</Tabs>
+
+**On-chain (Solidity):**
+
+```solidity  theme={null}
+import {DecryptionAttestation} from "@inco/lightning/src/lightning-parts/DecryptionAttester.types.sol";
+import {inco, ebool} from "@inco/lightning/src/Lib.sol";
+import {asBool} from "@inco/lightning/src/shared/TypeUtils.sol";
+
+contract GatedAccess {
+    mapping(address => ebool) internal userAllowed;
+
+    function gatedAction(
+        DecryptionAttestation memory decryption,
+        bytes[] memory signatures
+    ) external {
+        require(
+            inco.incoVerifier().isValidDecryptionAttestation(decryption, signatures),
+            "Invalid signature"
+        );
+        require(ebool.unwrap(userAllowed[msg.sender]) == decryption.handle, "Handle mismatch");
+        require(asBool(decryption.value) == true, "Not allowed");
+
+        // proceed
+    }
+}
+```
+
+***
+
+## Attested Reveal
+
+**Off-chain (JS SDK):**
+
+<Tabs>
+  <Tab title="example.ts">
+    ```typescript  theme={null}
+    import { getContract } from "viem";
+    import { revealAbi } from "./abi";
+    import { walletClient } from "./client";
+
+    // 1. Create contract instance
+    const contract = getContract({
+      address: "0x...", // Replace with your deployed contract address
+      abi: revealAbi,
+      client: walletClient,
+    });
+
+    // 2. Use attested reveal and call contract
+    const results = await zap.attestedReveal([handleHex]);
+    const { handle, plaintext, covalidatorSignatures } = results[0];
+    const { value } = plaintext;
+
+    await contract.write.submitRevealedValue([
+      {
+        handle,
+        value,
+      },
+      covalidatorSignatures,
+    ]);
+    ```
+  </Tab>
+
+  <Tab title="client.ts">
+    ```typescript  theme={null}
+    import { createWalletClient, http } from "viem";
+    import { baseSepolia } from "viem/chains";
+    import { Lightning, supportedChains } from "@inco/js";
+
+    export const walletClient = createWalletClient({
+      chain: baseSepolia,
+      transport: http(),
+    });
+
+    export const zap = await Lightning.latest(
+      "testnet",
+      supportedChains.baseSepolia
+    );
+    ```
+  </Tab>
+
+  <Tab title="abi.ts">
+    ```typescript  theme={null}
+    export const revealAbi = [
+      {
+        inputs: [
+          {
+            components: [
+              {
+                internalType: "bytes32",
+                name: "handle",
+                type: "bytes32",
+              },
+              {
+                internalType: "bytes32",
+                name: "value",
+                type: "bytes32",
+              },
+            ],
+            internalType: "struct DecryptionAttestation",
+            name: "decryption",
+            type: "tuple",
+          },
+          {
+            internalType: "bytes[]",
+            name: "signatures",
+            type: "bytes[]",
+          },
+        ],
+        name: "submitRevealedValue",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+      },
+    ] as const;
+    ```
+  </Tab>
+</Tabs>
+
+**On-chain (Solidity):**
+
+```solidity  theme={null}
+import {DecryptionAttestation} from "@inco/lightning/src/lightning-parts/DecryptionAttester.types.sol";
+import {inco, e, ebool, euint256} from "@inco/lightning/src/Lib.sol";
+import {asBool} from "@inco/lightning/src/shared/TypeUtils.sol";
+
+contract GatedAccess {
+    using e for *;
+
+    euint256 someHandle;
+    function submitRevealedValue(
+        DecryptionAttestation memory decryption,
+        bytes[] memory signatures
+    ) external {
+        require(
+            inco.incoVerifier().isValidDecryptionAttestation(
+                decryption,
+                signatures
+            ),
+            "Invalid signature"
+        );
+        require(
+            euint256.unwrap(someHandle) == decryption.handle,
+            "Handle mismatch"
+        );
+
+        uint256 revealedValue = uint256(decryption.value);
+        // use revealedValue
+    }
+}
+```
+
+***
+
+## Attested Compute
+
+Attested compute first produces a **computed handle** (for example
+`handleB = handleA.ge(700)`), and then returns a decryption attestation
+**for that result handle**. On-chain you verify that:
+
+* the attestation is valid,
+* the `decryption.handle` matches the expected computed handle (e.g. `handleB`),
+* and the decrypted value of `handleB` satisfies your predicate.
+
+**Off-chain (JS SDK):**
+
+<Tabs>
+  <Tab title="example.ts">
+    ```typescript  theme={null}
+    import { getContract } from "viem";
+    import { creditCheckAbi } from "./abi";
+    import { walletClient } from "./client";
+
+    // 1. Create contract instance
+    const contract = getContract({
+      address: "0x...", // Replace with your deployed contract address
+      abi: creditCheckAbi,
+      client: walletClient,
+    });
+
+    // 2. Read encrypted credit score handle
+    const creditScoreHandle = await contract.read.userCreditScore([
+      walletClient.account.address,
+    ]);
+
+    // 3. Off-chain check: is credit score >= 700?
+    const { handle, plaintext, covalidatorSignatures } = await zap.attestedCompute(
+      walletClient,
+      creditScoreHandle,
+      AttestedComputeSupportedOps.Ge,
+      700n
+    );
+
+    const { value } = plaintext; // always boolean
+    await contract.write.submitCreditCheck([
+      {
+        handle,
+        value,
+      },
+      covalidatorSignatures,
+    ]);
+    ```
+  </Tab>
+
+  <Tab title="client.ts">
+    ```typescript  theme={null}
+    import { createWalletClient, http } from "viem";
+    import { baseSepolia } from "viem/chains";
+    import { Lightning, supportedChains } from "@inco/js";
+
+    export const walletClient = createWalletClient({
+      chain: baseSepolia,
+      transport: http(),
+    });
+
+    export const zap = await Lightning.latest(
+      "testnet",
+      supportedChains.baseSepolia
+    );
+    ```
+  </Tab>
+
+  <Tab title="abi.ts">
+    ```typescript  theme={null}
+    export const creditCheckAbi = [
+      {
+        inputs: [
+          {
+            components: [
+              {
+                internalType: "bytes32",
+                name: "handle",
+                type: "bytes32",
+              },
+              {
+                internalType: "bytes32",
+                name: "value",
+                type: "bytes32",
+              },
+            ],
+            internalType: "struct DecryptionAttestation",
+            name: "decryption",
+            type: "tuple",
+          },
+          {
+            internalType: "bytes[]",
+            name: "signatures",
+            type: "bytes[]",
+          },
+        ],
+        name: "submitCreditCheck",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+      },
+    ] as const;
+    ```
+  </Tab>
+</Tabs>
+
+**On-chain (Solidity):**
+
+```solidity  theme={null}
+import {DecryptionAttestation} from "@inco/lightning/src/lightning-parts/DecryptionAttester.types.sol";
+import {inco, e, ebool, euint256} from "@inco/lightning/src/Lib.sol";
+import {asBool} from "@inco/lightning/src/shared/TypeUtils.sol";
+
+contract GatedAccess {
+    using e for *;
+
+    // Encrypted credit score handle stored on-chain for each user
+    mapping(address => euint256) internal userCreditScore;
+
+    function submitCreditCheck(
+        DecryptionAttestation memory decryption,
+        bytes[] memory signatures
+    ) external {
+        // 1. Verify covalidator signatures over the attested result
+        require(
+            inco.incoVerifier().isValidDecryptionAttestation(
+                decryption,
+                signatures
+            ),
+            "Invalid signature"
+        );
+
+        // 2. Recompute the expected "creditScore >= 700" handle on-chain
+        euint256 creditScore = userCreditScore[msg.sender];
+        require(
+            ebool.unwrap(creditScore.ge(700)) == decryption.handle,
+            "Computed handle mismatch"
+        );
+
+        // 3. Check that the decrypted boolean is true
+        require(asBool(decryption.value) == true, "Credit check failed");
+
+        // proceed with approval
+    }
+}
+```
+
+────────────────────────────────────────────────────────────
+
+## Inco - Confidential Computing for Web3
+Source: https://docs.inco.org/home.md
+
+# Inco - Confidential Computing for Web3
+
+> Build confidential smart contracts. Secure, private, and scalable blockchain applications.
+
+<div className="relative overflow-hidden">
+  <div className="absolute inset-0 bg-center -z-10 dark:hidden">
+    <img src="https://mintcdn.com/inco/D3QbaZIMpagfHonp/background.svg?fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=0078f3533a8180cfaac05781e2c2de9d" alt="" className="w-full h-full object-cover" data-og-width="1500" width="1500" data-og-height="549" height="549" data-path="background.svg" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/inco/D3QbaZIMpagfHonp/background.svg?w=280&fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=513dcaa4794070070aa7e9c6bacb7263 280w, https://mintcdn.com/inco/D3QbaZIMpagfHonp/background.svg?w=560&fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=e399702e25529cadaa5a241e8aff8b1f 560w, https://mintcdn.com/inco/D3QbaZIMpagfHonp/background.svg?w=840&fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=ce7031463af01bbe780106bda9d5f584 840w, https://mintcdn.com/inco/D3QbaZIMpagfHonp/background.svg?w=1100&fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=aa59e18ea74aeccd0be752a681e67ac6 1100w, https://mintcdn.com/inco/D3QbaZIMpagfHonp/background.svg?w=1650&fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=fb7d8c4369c2301196467e32c3032c5c 1650w, https://mintcdn.com/inco/D3QbaZIMpagfHonp/background.svg?w=2500&fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=10188fa3a2155cba414cd0ee0af6a748 2500w" />
+  </div>
+
+  <div className="absolute inset-0 bg-center -z-10 hidden dark:block">
+    <img src="https://mintcdn.com/inco/D3QbaZIMpagfHonp/background-dark.svg?fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=07a7d8738b492bf0ed4ac147f5fd77ff" alt="" className="w-full h-full object-cover" data-og-width="1500" width="1500" data-og-height="549" height="549" data-path="background-dark.svg" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/inco/D3QbaZIMpagfHonp/background-dark.svg?w=280&fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=565797ef6e212e508a94021749b603f4 280w, https://mintcdn.com/inco/D3QbaZIMpagfHonp/background-dark.svg?w=560&fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=2bce66395bf47ea8fad019b783066bd6 560w, https://mintcdn.com/inco/D3QbaZIMpagfHonp/background-dark.svg?w=840&fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=47eb5b260b8bb9cc34e79dda5afe8248 840w, https://mintcdn.com/inco/D3QbaZIMpagfHonp/background-dark.svg?w=1100&fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=f8fd7cb325ab69a2a364945c2fe4a792 1100w, https://mintcdn.com/inco/D3QbaZIMpagfHonp/background-dark.svg?w=1650&fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=7a69e432fe3312889004824f2fade0a6 1650w, https://mintcdn.com/inco/D3QbaZIMpagfHonp/background-dark.svg?w=2500&fit=max&auto=format&n=D3QbaZIMpagfHonp&q=85&s=c4c4d3d00da0630cedf3435d766b09d9 2500w" />
+  </div>
+
+  <div className="text-center py-32 px-4">
+    <h1 className="text-5xl md:text-6xl font-bold mb-6 text-gray-900 dark:text-white leading-tight tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
+      Build with Inco
+    </h1>
+
+    <p className="text-xl text-gray-800 dark:text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
+      Inco enables developers to easily create confidential smart contracts with
+      private data types, operations and programmable access control.
+    </p>
+
+    <div className="flex flex-col md:flex-row gap-4 justify-center">
+      <a href="/introduction" className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+        Get Started
+      </a>
+
+      <a href="https://experiences.inco.org/" target="_blank" className="border border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200 px-8 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        View Demos
+      </a>
+    </div>
+  </div>
+</div>
+
+<div className="max-w-6xl mx-auto px-4">
+  <div className="relative -mt-16 mb-16">
+    <div className="absolute inset-0 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl -z-10" />
+
+    <div className="p-8">
+      ## Why Inco?
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 my-8">
+        <div className="p-8 border dark:border-gray-800 rounded-2xl hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/50 dark:to-blue-800/50 rounded-2xl flex items-center justify-center mb-6">
+            <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+
+          <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Private Use Cases</h3>
+          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">Build new private dApps across payment, DeFi, governance, gaming and more.</p>
+        </div>
+
+        <div className="p-8 border dark:border-gray-800 rounded-2xl hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/50 dark:to-blue-800/50 rounded-2xl flex items-center justify-center mb-6">
+            <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+          </div>
+
+          <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Developer Friendly</h3>
+          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">Write confidential smart contracts in Solidity with our easy-to-use SDK.</p>
+        </div>
+
+        <div className="p-8 border dark:border-gray-800 rounded-2xl hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/50 dark:to-blue-800/50 rounded-2xl flex items-center justify-center mb-6">
+            <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+
+          <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Scalable & Secure</h3>
+          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">Build scalable applications with enterprise-grade security and privacy.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  ## Getting Started
+
+  We've created guides to help you get started quickly with Inco:
+
+  <CardGroup>
+    <Card title="Quick Start Guide" icon="rocket" href="/quickstart">
+      Get up and running with Inco in minutes
+    </Card>
+
+    <Card title="Build a Confidential Token" icon="coins" href="/tutorials/confidential-token">
+      Learn how to create and deploy your first confidential token
+    </Card>
+  </CardGroup>
+
+  ## Build with Inco
+
+  Choose your preferred way to build with Inco:
+
+  <CardGroup>
+    <Card title="Build Confidential Smart Contracts" icon="file-contract" href="/quickstart">
+      Use Inco's Solidity SDK to create privacy-preserving smart contracts
+    </Card>
+
+    <Card title="Frontend/Backend Integration" icon="code" href="/js-sdk">
+      Integrate those contracts with your frontend or backend using Inco's
+      JavaScript SDK
+    </Card>
+  </CardGroup>
+
+  <div className="flex flex-col items-center my-16">
+    <div className="flex gap-8">
+      <a href="https://discord.com/invite/inco" target="_blank" className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white flex items-center group">
+        <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-indigo-50 dark:from-indigo-900/50 dark:to-indigo-800/50 rounded-2xl flex items-center justify-center mr-3 group-hover:shadow-lg transition-all duration-300">
+          <svg className="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515a.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0a12.64 12.64 0 00-.617-1.25a.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057a19.9 19.9 0 005.993 3.03a.078.078 0 00.084-.028a14.09 14.09 0 001.226-1.994a.076.076 0 00-.041-.106a13.107 13.107 0 01-1.872-.892a.077.077 0 01-.008-.128a10.2 10.2 0 00.372-.292a.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127a12.299 12.299 0 01-1.873.892a.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028a19.839 19.839 0 006.002-3.03a.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z" />
+          </svg>
+        </div>
+
+        Discord
+      </a>
+
+      <a href="https://github.com/Inco-fhevm" target="_blank" className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white flex items-center group">
+        <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-900/50 dark:to-gray-800/50 rounded-2xl flex items-center justify-center mr-3 group-hover:shadow-lg transition-all duration-300">
+          <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.237 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+          </svg>
+        </div>
+
+        GitHub
+      </a>
+
+      <a href="https://x.com/inconetwork" target="_blank" className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white flex items-center group">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/50 dark:to-blue-800/50 rounded-2xl flex items-center justify-center mr-3 group-hover:shadow-lg transition-all duration-300">
+          <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+          </svg>
+        </div>
+
+        Twitter
+      </a>
+    </div>
+  </div>
+</div>
+
+────────────────────────────────────────────────────────────
+
+## Introduction
+Source: https://docs.inco.org/introduction.md
+
+# Introduction
+
+> Welcome to Inco!
+
+<Note>
+  Inco Lightning is currently available on Base Sepolia in beta testnet. We are actively working on making Inco Lightning available to other chains.
+</Note>
+
+Inco (short for "incognito") is the confidentiality layer for existing blockchains.
+
+# What is Inco Lightning?
+
+Inco Lightning uses Trusted Execution Environments (TEEs) to deliver verifiable confidential compute at lightning-fast speeds. It introduces new private data types, operations, and access controls, enabling smart contracts to process sensitive data securely. No new chain, no new wallet. Just import our Solidity library and start building privacy-preserving dApps today.
+
+────────────────────────────────────────────────────────────
+
+## JavaScript SDK
+Source: https://docs.inco.org/js-sdk.md
+
+# JavaScript SDK
+
+> incoJs is a javascript library that enables developers to interact with the inco protocol
+
+## Overview
+
+incoJs is a JavaScript library that enables developers to interact with the Inco protocol. It provides a comprehensive set of tools and utilities for building privacy-preserving decentralized applications.
+
+## Getting Started
+
+There are two main ways to start using incoJs in your project:
+
+<CardGroup>
+  <Card title="NextJS Starter" icon="react" href="/js-sdk/nextjs-starter">
+    Get started quickly with our NextJS template for building dApps with Inco
+  </Card>
+
+  <Card title="Existing Project Integration" icon="square-plus" href="/js-sdk/existing-project">
+    Learn how to integrate incoJs into your existing JavaScript/TypeScript project
+  </Card>
+</CardGroup>
+
+────────────────────────────────────────────────────────────
+
+## Attested Compute
+Source: https://docs.inco.org/js-sdk/attestations/attested-compute.md
+
+# Attested Compute
+
+Attested compute allows to perform a computation on a handle completely off-chain and get the decryption attestation containing decryption result and attestation.
+Only handles that are allowed with e.allow() or e.reveal() can be used in computation.
+The attestation can then be verified on-chain to perform certain on-chain actions, avoiding unnecessary transaction.
+
+## Getting Started
+
+Take this example contract that holds an encrypted credit score of a user, to determine whether they're eligible for a loan:
+
+```solidity  theme={null}
+import {euint256, e, ebool, inco} from "@inco/lightning/src/Lib.sol";
+import {DecryptionAttestation} from "@inco/lightning/src/lightning-parts/DecryptionAttester.types.sol";
+import {asBool} from "@inco/lightning/src/shared/TypeUtils.sol";
+
+contract TestAttestedCompute {
+    euint256 hiddenCreditScore;
+
+    constructor(address owner) payable {
+        require(msg.value == inco.getFee(), "Fee not paid");
+        hiddenCreditScore = e.asEuint256(800);
+        e.allow(hiddenCreditScore, address(this));
+        e.allow(hiddenCreditScore, owner);
+    }
+
+    function GetHandle() external returns (euint256) {
+        return hiddenCreditScore;
+    }
+
+    function SubmitCreditCheck(
+        DecryptionAttestation memory decryption,
+        bytes[] memory signatures
+    ) external {
+        // Verify covalidator signatures over the attested result
+        require(
+            inco.incoVerifier().isValidDecryptionAttestation(decryption, signatures),
+            "Invalid signature"
+        );
+
+        // Recompute the expected "creditScore >= 700" handle on-chain
+        require(
+            ebool.unwrap(e.ge(hiddenCreditScore, 700)) == decryption.handle,
+            "Computed handle mismatch"
+        );
+
+        // Check that the decrypted boolean is true
+        require(asBool(decryption.value) == true, "Credit check failed");
+
+        // Credit check passed - proceed with loan approval
+    }
+}
+```
+
+Presume we want to know whether the credit score is greater than or equal 700 without sending an additional transaction.
+We can do that by calling attestedCompute (similar to [Attested Decrypt](../attestations/attested-decrypt)):
+
+```JavaScript  theme={null}
+import { Lightning } from '@inco/js/lite';
+import { getViemChain, supportedChains, type HexString } from '@inco/js';
+import { AttestedComputeSupportedOps } from '@inco/js/lite';
+import { createWalletClient, custom } from 'viem'
+
+const zap = await Lightning.latest('testnet', supportedChains.baseSepolia);
+
+//Connect to Metamask or other wallet provider
+const walletClient = createWalletClient({
+  chain: getViemChain(supportedChains.baseSepolia),
+  transport: custom(window.ethereum!)
+})
+
+// Retrieve the hiddenCreditScore handle from the contract by calling GetHandle(), e.g. using viem
+const hiddenCreditScore = '0x<handle>' as HexString;
+
+// isGreaterOrEqual = hiddenCreditScore >= 700
+const isGreaterOrEqual = await zap.attestedCompute(
+  walletClient,
+  hiddenCreditScore,
+  AttestedComputeSupportedOps.Ge,
+  700n,
+);
+
+const creditScoreSufficient = isGreaterOrEqual.plaintext.value; // always boolean
+```
+
+Which is equivalent to:
+
+```solidity  theme={null}
+ebool creditScoreSufficient = e.ge(hiddenCreditScore, 700);
+```
+
+isGreaterOrEqual also contains a signature from covalidator attesting to the computation, which can be used to submit decryption back on-chain, even if the handle doesn't exist on chain yet.
+
+## Supported operations
+
+| Name                  | Op                               | Type            | Returns |
+| --------------------- | -------------------------------- | --------------- | ------- |
+| Equal                 | `AttestedComputeSupportedOps.Eq` | Scalar Binary\* | bool    |
+| Not equal             | `AttestedComputeSupportedOps.Ne` | Scalar Binary\* | bool    |
+| Greater than or equal | `AttestedComputeSupportedOps.Ge` | Scalar Binary\* | bool    |
+| Greater than          | `AttestedComputeSupportedOps.Gt` | Scalar Binary\* | bool    |
+| Less than or equal    | `AttestedComputeSupportedOps.Le` | Scalar Binary\* | bool    |
+| Less than             | `AttestedComputeSupportedOps.Lt` | Scalar Binary\* | bool    |
+
+* Scalar binary operation - operation that takes in two operands, one of which is a handle and the second one is a number (aka scalar).
+
+## Compute with Allowance Voucher/Session Key
+
+Compute on a handle can be performed with a session key instead of a wallet provider using sessionKeyAttestedCompute(), see [Allowance Voucher](../voucher/allowance-voucher).
+
+────────────────────────────────────────────────────────────
+
+## Attested Decrypt
+Source: https://docs.inco.org/js-sdk/attestations/attested-decrypt.md
+
+# Attested Decrypt
+
+Attested decrypt allows authorized user to request a decryption attestation and submit plaintext back on chain.
+Only handles that are allowed with `e.allow()` or `e.reveal()` can be used in decryption.
+
+## Getting Started
+
+Take this example contract:
+
+```solidity  theme={null}
+import {euint256, e, inco} from "@inco/lightning/src/Lib.sol";
+import {DecryptionAttestation} from "@inco/lightning/src/lightning-parts/DecryptionAttester.types.sol";
+
+contract TestAttestedDecrypt {
+    euint256 randomNumber;
+    uint256 decryptedNumber;
+
+    constructor(address owner) payable {
+        require(msg.value == inco.getFee(), "Fee not paid");
+        randomNumber = e.rand();
+        e.allow(randomNumber, address(this));
+        e.allow(randomNumber, owner);
+    }
+
+    function GetHandle() external returns (euint256) {
+        return randomNumber;
+    }
+
+    function SubmitDecryption(
+        DecryptionAttestation memory decryption,
+        bytes[] memory signatures
+    ) external {
+        require(
+            inco.incoVerifier().isValidDecryptionAttestation(decryption, signatures),
+            "Invalid Signature"
+        );
+        require(euint256.unwrap(randomNumber) == decryption.handle, "Handle mismatch");
+
+        decryptedNumber = uint256(decryption.value);
+    }
+}
+```
+
+This contract creates a random 256bit integer and grants owner the ownership of the handle, allowing the owner to perform computations on it as well as decrypt it.
+
+In order to decrypt the random integer, the owner can now request a decryption with attestation from covalidator and that's done completely offchain.
+
+## Basic Decryption
+
+Here's how to decrypt a handle using a wallet client:
+
+```JavaScript  theme={null}
+import { getViemChain, supportedChains, type HexString } from '@inco/js';
+import { Lightning } from '@inco/js/lite';
+import { createWalletClient, custom } from 'viem'
+
+// Connect to Metamask or other wallet provider
+const walletClient = createWalletClient({
+  chain: getViemChain(supportedChains.baseSepolia),
+  transport: custom(window.ethereum!)
+})
+
+const zap = await Lightning.latest('testnet', supportedChains.baseSepolia);
+const results = await zap.attestedDecrypt(
+  walletClient,
+  ["0x<your_handle>" as HexString]
+);
+const plaintext = results[0].plaintext.value;
+```
+
+It's also possible to decrypt multiple handles in a single request by passing an array of handles:
+
+```javascript  theme={null}
+const results = await zap.attestedDecrypt(
+  walletClient,
+  [
+    "0x<your_handle_1>" as HexString,
+    "0x<your_handle_2>" as HexString
+  ]
+);
+const plaintext1 = results[0].plaintext.value;
+const plaintext2 = results[1].plaintext.value;
+```
+
+## Understanding Reencryption vs Decryption
+
+When using attested decrypt, you have two main options:
+
+* **Decryption**: Returns the plaintext value directly (as shown in the Basic Decryption examples above)
+* **Reencryption**: Instead of returning plaintext, the decrypted value is re-encrypted with a different public key. This allows you to share decrypted data with third parties (delegates) without exposing the plaintext, or to decrypt it locally using your own keypair.
+
+Reencryption provides an additional layer of security by ensuring that even if the attested decrypt response is intercepted, the actual plaintext value remains encrypted and can only be decrypted by the intended recipient.
+
+## Reencryption for Delegates
+
+You can request that the decryption be reencrypted for a delegate using their public key. This returns an encrypted decryption attestation that only the delegate can decrypt:
+
+```javascript  theme={null}
+import { generateSecp256k1Keypair } from '@inco/js/lite';
+
+// Generate a keypair for the delegate
+const delegateKeypair = generateSecp256k1Keypair();
+const delegatePubKey = delegateKeypair.encodePublicKey();
+
+// Request reencryption for the delegate
+const encryptedResults = await zap.attestedDecrypt(
+  walletClient,
+  ["0x<your_handle>" as HexString],
+  delegatePubKey
+);
+
+// The delegate can decrypt using their keypair
+const encryptedAttestation = encryptedResults[0].encryptedPlaintext;
+// The delegate would decrypt this using their private key
+```
+
+## Reencrypt and Decrypt Locally
+
+You can also request reencryption and decrypt it immediately using a keypair you control:
+
+```javascript  theme={null}
+import { generateSecp256k1Keypair } from '@inco/js/lite';
+
+// Generate your own keypair
+const keypair = generateSecp256k1Keypair();
+const pubKey = keypair.encodePublicKey();
+
+// Request reencryption and decrypt locally
+const results = await zap.attestedDecrypt(
+  walletClient,
+  ["0x<your_handle>" as HexString],
+  pubKey,
+  keypair
+);
+
+const plaintext = results[0].plaintext.value;
+```
+
+## Session Key Decryption
+
+For applications that need to perform decryption without requiring the user to sign each request, you can use session keys with allowance vouchers:
+
+```javascript  theme={null}
+import { generateSecp256k1Keypair } from '@inco/js/lite';
+
+// Generate an ephemeral keypair for the session
+const ephemeralKeypair = generateSecp256k1Keypair();
+
+const defaultSessionVerifier = '0xc34569efc25901bdd6b652164a2c8a7228b23005';
+
+// Grant a session key allowance voucher (done once, typically by the user)
+const expiresAt = new Date(Date.now() + 3600000); // 1 hour from now
+const voucher = await zap.grantSessionKeyAllowanceVoucher(
+  walletClient,
+  ephemeralKeypair.encodePublicKey(), // grantee address derived from keypair
+  expiresAt,
+  defaultSessionVerifier // or a custom session verifier
+);
+
+// Now decrypt using the session key (no wallet signature needed)
+const results = await zap.attestedDecryptWithVoucher(
+  ephemeralKeypair,
+  voucher,
+  ["0x<your_handle>" as HexString]
+);
+
+const plaintext = results[0].plaintext.value;
+```
+
+Session key decryption also supports reencryption:
+
+```javascript  theme={null}
+// Reencrypt for a delegate using session key
+const delegateKeypair = generateSecp256k1Keypair();
+const encryptedResults = await zap.attestedDecryptWithVoucher(
+  ephemeralKeypair,
+  voucher,
+  ["0x<your_handle>" as HexString],
+  delegateKeypair.encodePublicKey()
+);
+
+// Or reencrypt and decrypt locally
+const results = await zap.attestedDecryptWithVoucher(
+  ephemeralKeypair,
+  voucher,
+  ["0x<your_handle>" as HexString],
+  keypair.encodePublicKey(),
+  keypair
+);
+```
+
+## Retry Configuration
+
+All decryption methods support optional retry configuration:
+
+```javascript  theme={null}
+const backoffConfig = {
+  maxRetries: 5,
+  initialDelay: 1000,
+  maxDelay: 10000
+};
+
+const results = await zap.attestedDecrypt(
+  walletClient,
+  ["0x<your_handle>" as HexString],
+  backoffConfig
+);
+```
+
+If you wish to perform a computation on a handle before decrypting it in a single request, check out [Attested Compute](../attestations/attested-compute) .
+
+## Attested decrypt with Allowance Voucher/Session Key
+
+Attested decrypt can also be called with a session key instead of a wallet provider using [Allowance Voucher](../voucher/allowance-voucher), allowing someone else to request decryption on your behalf.
+
+────────────────────────────────────────────────────────────
+
+## Attested Reveal
+Source: https://docs.inco.org/js-sdk/attestations/attested-reveal.md
+
+# Attested Reveal
+
+Attested reveal is similar to [Attested Decrypt](../attestations/attested-decrypt).
+The major difference is that anyone can request a decryption with attestation after e.reveal() has been called on a handle, allowing anyone to submit the decryption result back on-chain.
+
+<Warning>
+  {" "}
+
+  Once revealed with e.reveal(), the ciphertext is considered public and can be accessed
+  by anyone. This action can not be undone.{" "}
+</Warning>
+
+## Getting Started
+
+Let's examine this example contract:
+
+```solidity  theme={null}
+import {euint256, e, inco} from "@inco/lightning/src/Lib.sol";
+import {DecryptionAttestation} from "@inco/lightning/src/lightning-parts/DecryptionAttester.types.sol";
+
+contract TestAttestedReveal {
+    euint256 randomNumber;
+    uint256 decryptedNumber;
+
+    constructor(address owner) payable {
+        require(msg.value == inco.getFee(), "Fee not paid");
+        randomNumber = e.rand();
+        e.reveal(randomNumber);
+    }
+
+    function GetHandle() external returns (euint256) {
+        return randomNumber;
+    }
+
+    function SubmitDecryption(
+        DecryptionAttestation memory decryption,
+        bytes memory signature
+    ) external {
+        require(
+            inco.incoVerifier().isValidDecryptionAttestation(decryption, signature),
+            "Invalid Signature"
+        );
+        require(euint256.unwrap(randomNumber) == decryption.handle, "Handle mismatch");
+        decryptedNumber = uint256(decryption.value);
+    }
+}
+```
+
+This contract creates a random 256bit integer and immediately calls e.reveal(), allowing anyone to decrypt, perform computation on it or request an attestation, even though we haven't explicitly granted permission to any particular address.
+
+```javascript  theme={null}
+import { getViemChain, supportedChains, type HexString, type SupportedChainId } from '@inco/js';
+import { createWalletClient, custom } from 'viem';
+
+ //Connect to Metamask or other wallet provider
+const walletClient = createWalletClient({
+  chain: getViemChain(supportedChains.baseSepolia),
+  transport: custom(window.ethereum!)
+})
+
+const zap = Lightning.latest('testnet', supportedChains.baseSepolia);
+
+const results = await zap.attestedReveal(
+    ["0x<revealed_handle>" as HexString]
+);
+
+const plaintext = results[0].plaintext;
+```
+
+The result contains the plaintext with covalidator signature. It can be used to submit back the decryption on-chain by calling "SubmitDecryption" as an alternative to the old callbacks.
+
+────────────────────────────────────────────────────────────
+
+## Encrypting Values
+Source: https://docs.inco.org/js-sdk/encryption.md
+
+# Encrypting Values
+
+> How to encrypt supported types (euint256, ebool, eaddress) with incoJS.
+
+The `zap.encrypt` helper lets you encrypt plaintext values before sending them on-chain. incoJS currently supports three encrypted handle types:
+
+* `handleTypes.euint256` — 256-bit unsigned integers.
+* `handleTypes.ebool` — booleans.
+* `handleTypes.euint160` — Ethereum addresses (use `BigInt` to encode the address, effectively an `eaddress`).
+
+## Common setup
+
+```ts  theme={null}
+import { handleTypes, getViemChain, supportedChains } from '@inco/js';
+import { createWalletClient, type Address } from 'viem';
+import { Lightning } from '@inco/js/lite'
+
+// Do this once at initialization
+const chainId = supportedChains.baseSepolia;
+const zap = Lightning.latest('testnet', chainId);
+const walletClient = createWalletClient({
+  chain: getViemChain(chainId),
+  account: /* Choose your account, e.g. from window.ethereum */,
+  transport: /* Choose your transport, e.g. from Alchemy */,
+});
+const dappAddress = '0x00000000000000000000000000000000deadbeef'; // Your contract
+```
+
+## Encrypt an `euint256`
+
+```ts  theme={null}
+const amount = 42n;
+
+const ct = await zap.encrypt(amount, {
+  accountAddress: walletClient.account.address,
+  dappAddress,
+  handleType: handleTypes.euint256,
+});
+```
+
+## Encrypt an `ebool`
+
+```ts  theme={null}
+const flag = true;
+
+const ct = await zap.encrypt(flag, {
+  accountAddress: walletClient.account.address,
+  dappAddress,
+  handleType: handleTypes.ebool,
+});
+```
+
+## Encrypt an `eaddress` (aka `euint160`)
+
+Addresses must be converted to a `BigInt` before encryption.
+
+```ts  theme={null}
+const address: Address = walletClient.account.address;
+
+const ct = await zap.encrypt(BigInt(address), {
+  accountAddress: walletClient.account.address,
+  dappAddress,
+  handleType: handleTypes.euint160,
+});
+```
+
+Each example returns a ciphertext `HexString` you can pass to your contract or store as a handle for later confidential computation.
+
+👉 **See also:** [How encrypted inputs are consumed on the contract side](../guide/input)
+
+────────────────────────────────────────────────────────────
+
+## Use IncoJS in Existing Project
+Source: https://docs.inco.org/js-sdk/existing-project.md
+
+# Use IncoJS in Existing Project
+
+> Integrate incoJS into your existing JavaScript/TypeScript project.
+
+<Note>
+  {" "}
+
+  Currently only tested with Webpack and NextJS. If you are using Rollup or Vite
+  please report any issues [here](https://docs.google.com/forms/d/e/1FAIpQLSetj4PsvNUSTP7nQYun9D-VF1cXX6YtYctjKkzC4j-x_g2wXg/viewform){" "}
+</Note>
+
+## Install
+
+Choose your favorite package manager:
+
+<CodeGroup>
+  ```bash npm theme={null}
+  npm install @inco/js
+  ```
+
+  ```bash yarn theme={null}
+  yarn add @inco/js
+  ```
+
+  ```bash bun theme={null}
+  bun add @inco/js
+  ```
+</CodeGroup>
+
+## Usage
+
+A typical usage of `@inco/js` includes 3 steps:
+
+1. Encrypting a value.
+2. Posting the ciphertext to the contract, which will perform confidential computes on it.
+3. Requesting a decryption of the result of the computation.
+
+Next, follow the [Encryption guide](/js-sdk/encryption) for a full walkthrough of these steps.
+
+────────────────────────────────────────────────────────────
+
+## NextJS Starter
+Source: https://docs.inco.org/js-sdk/nextjs-starter.md
+
+# NextJS Starter
+
+> Get started quickly with our NextJS template for building dApps with Inco
+
+> Note: currently, the NextJS template **only works against Base Sepolia**. An updated template will be published shortly with a working setup against a local node and local covalidator.
+
+## Overview
+
+The Inco NextJS starter template provides a pre-configured environment for building decentralized applications with privacy features. It includes everything you need to start building confidential dApps with NextJS and Inco.
+
+# NextJs Starter
+
+Here's a simple NextJs starter kit with incoJs: [GitHub Template](https://github.com/Inco-fhevm/nextjs-template)
+
+## Getting Started
+
+### 1. Clone the Template
+
+We can start by cloning our template project. You can either:
+
+* Go to our [repository](https://github.com/Inco-fhevm/nextjs-template) and click the `Use this template` button at the top of the page to create a new repository
+* Or clone it directly:
+
+```bash  theme={null}
+git clone https://github.com/Inco-fhevm/nextjs-template.git
+cd nextjs-template
+```
+
+### 2. Install and Run
+
+Install the project dependencies and start the development server:
+
+```bash  theme={null}
+npm install 
+npm run dev
+```
+
+────────────────────────────────────────────────────────────
+
+## Allowance Voucher
+Source: https://docs.inco.org/js-sdk/voucher/allowance-voucher.md
+
+# Allowance Voucher
+
+Allowance voucher (aka Session Key) allows owner of a ciphertext to delegate viewing/compute to someone else for a period of time completely off-chain.
+
+<Note>Vouchers are like sessions and are revokable.</Note>
+
+## Getting Started
+
+To create a voucher and grant Bob permission to decrypt on Alice's behalf:
+
+```javascript  theme={null}
+import { createWalletClient, custom } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts';
+import { getViemChain, supportedChains, type SupportedChainId } from '@inco/js';
+import { Lightning, generateSecp256k1Keypair } from '@inco/js/lite';
+
+// Alice connects her wallet
+const walletClient = createWalletClient({
+  chain: getViemChain(supportedChains.baseSepolia),
+  transport: custom(window.ethereum!)
+})
+
+// Alice creates an ephemeral keypair to use for the decryption request
+const ephemeralKeypair = generateSecp256k1Keypair();
+const ephemeralAccount = privateKeyToAccount(
+    `0x${ephemeralKeypair.kp.getPrivate('hex')}`,
+);
+const zap = await Lightning.latest("testnet", 84532);
+// Default session verifier address
+const sessionVerfier = "0xc34569efc25901bdd6b652164a2c8a7228b23005";
+
+// Alice creates attested decrypt request and passes the voucher
+const voucherWithSig = await zap.grantSessionKeyAllowanceVoucher(
+    walletClient,
+    ephemeralAccount.address,
+    new Date(Date.now() + 1000 * 60 * 60 * 24), // 1 day, in seconds
+    sessionVerfier,
+);
+```
+
+<Note>
+  Some specific use cases may require a custom session verifier logic, to for
+  example check whether a payment has been made in order to access secrets.
+  grantSessionKeyAllowanceVoucher() allows the owner to specify a custom session
+  verifier contract address with a custom canUseSession() function that can
+  either allow or deny access based on certain on-chain conditions.
+</Note>
+
+<Warning>
+  Using the default session verifier will give the session key unverified access
+  to all user handles for the specified time period.
+
+  DEFAULT\_SESSION\_VERIFIER: (Base Sepolia)
+  0xc34569efc25901bdd6b652164a2c8a7228b23005
+</Warning>
+
+```Solidity  theme={null}
+import {ALLOWANCE_GRANTED_MAGIC_VALUE} from "@inco/lightning/src/Types.sol";
+
+struct Session {
+    address decrypter;
+    uint256 expiresAt;
+}
+
+contract MyCustomSessionVerifier {
+    function canUseSession(
+        bytes32, /* handle */
+        address account, /* user trying to use the session */
+        bytes memory sharerArgData,
+        bytes memory /* requesterArgData */
+    ) external view returns (bytes32) {
+        Session memory session = abi.decode(sharerArgData, (Session));
+        if (session.expiresAt >= block.timestamp && session.decrypter == account) {
+            return ALLOWANCE_GRANTED_MAGIC_VALUE;
+        }
+        return bytes32(0);
+    }
+}
+```
+
+## Attested Decrypt with Voucher/Session Key
+
+The voucher and signature now allow Bob to decrypt any handle that Alice owns using the attestedDecryptWithVoucher() function:
+
+```javascript  theme={null}
+import type { HexString } from '@inco/js';
+
+// Bob calls the attestedDecryptWithVoucher function with voucher
+const decrypted = await zap.attestedDecryptWithVoucher(
+    ephemeralKeypair,
+    voucherWithSig,
+    publicClient,
+    ['0x...' as HexString]
+);
+const plaintext = decrypted[0].plaintext.value;
+```
+
+## AttestedCompute with Voucher/Session Key
+
+Bob can also perform attested compute on behalf of Alice using attestedComputeWithVoucher() to check if the value is equal to an expected value:
+
+```javascript  theme={null}
+import type { AttestedComputeSupportedOps } from '@inco/js/lite';
+import type { HexString } from '@inco/js';
+
+const computed = await zap.attestedComputeWithVoucher(
+    ephemeralKeypair,
+    voucherWithSig,
+    publicClient,
+    '0x...' as HexString,
+    AttestedComputeSupportedOps.Eq,
+    100n
+);
+
+const plaintext = computed.plaintext.value;
+```
+
+## SessionKey Reencrypt
+
+Similarly, Bob can also perform reencryption on behalf of Alice using attestedDecryptWithVoucher() with a reencrypt public key. This is similar to standard [attested decrypt reencryption](../attestations/attested-decrypt#reencryption-for-delegates).
+
+```javascript  theme={null}
+import type { HexString } from '@inco/js';
+
+// Generate a reencrypt keypair for Bob
+const reencryptKeypair = generateSecp256k1Keypair();
+const reencryptPubKey = reencryptKeypair.encodePublicKey();
+
+// Bob performs reencryption on behalf of Alice
+const reencrypted = await zap.attestedDecryptWithVoucher(
+    ephemeralKeypair,
+    voucherWithSig,
+    publicClient,
+    ['0x...' as HexString],
+    reencryptPubKey
+);
+
+// Bob can decrypt the reencrypted data
+const decrypted = await decrypt(
+    reencryptKeypair,
+    hexToBytes(reencrypted[0].encryptedPlaintext.ciphertext.value)
+);
+const plaintext = BigInt('0x' + Buffer.from(decrypted).toString('hex'));
+```
+
+## Revoking a Voucher
+
+In order to invalidate existing vouchers, you can call this function:
+
+```javascript  theme={null}
+const txHash = await zap.updateActiveVouchersSessionNonce(walletClient);
+```
+
+Which will invalidate all existing vouchers, despite their expiration time.
+
+<Note>
+  If you want to selectively revoke access to specific users, your dApp would
+  need to handle the logic of reissuing new vouchers to users who still require
+  access.
+</Note>
+
+────────────────────────────────────────────────────────────
+
+## Quickstart
+Source: https://docs.inco.org/quickstart.md
+
+# Quickstart
+
+> Get started with Inco Lightning in minutes
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+* [Bun](https://bun.sh//) installed (you can also chose to use node + npm or equivalent)
+* [Docker](https://www.docker.com/get-started) installed
+* [Foundry](https://book.getfoundry.sh/) installed
+* Basic knowledge of Solidity and JavaScript/TypeScript
+
+## 1-minute setup
+
+We recommend getting started using our [template](https://github.com/Inco-fhevm/lightning-rod).
+
+1. Clone the repository:
+
+   ```sh  theme={null}
+   git clone git@github.com:Inco-fhevm/lightning-rod.git
+   cd lightning-rod
+   ```
+
+   Note that you can also clone the repository using HTTPS:
+
+   ```
+   git clone https://github.com/Inco-fhevm/lightning-rod
+   cd lightning-rod
+   ```
+
+2. Install dependencies:
+
+   ```sh  theme={null}
+   bun install
+   ```
+
+3. Compile contracts and test:
+
+   ```sh  theme={null}
+   bun run test
+   ```
+
+4. Finally, stop the docker containers which were started for the test:
+
+   ```sh  theme={null}
+   docker compose down
+   ```
+
+See [README.md](https://github.com/Inco-fhevm/lightning-rod) for other options on how to run the local development environment.
+
+## Next Steps
+
+If you are using Inco for the first time we recommend following our guide of basics, or you can learn from example.
+
+<CardGroup cols="2">
+  <Card title="Concepts Guide" icon="book-open" href="/guide">
+    Learn the basics of Inco Lightning
+  </Card>
+
+  <Card title="Library Reference" icon="file-contract" href="/quickstart/lib-reference">
+    Learn how to write confidential smart contracts
+  </Card>
+</CardGroup>
+
+────────────────────────────────────────────────────────────
+
+## Cheatcodes reference
+Source: https://docs.inco.org/quickstart/cheatcodes-reference.md
+
+# Cheatcodes reference
+
+> Fully simulate the Inco environment all from solidity tests
+
+## Execute the operations
+
+Inco's infrastructure is monitoring the operations requested over encrypted variables by the smart contracts.\
+Inco executes them asynchronously after the blocks containing the ops are mined. Under the hood, the Inco singleton instance on each
+supported chain is emitting events to request the operations (that includes encrypts, trivial encrypts, all logical and mathematical operations,
+and decryption requests). The solidity-based mock is using Foundry's `vm.recordLogs()` function to record the pending ops.
+<Warning> As the events recording are consumed whenever read, there would be conflicts if you try to use `recordLogs` in your tests.</Warning>
+To simulate Inco processing the operations, which assigns to its internal value store its encrypted value to each handle, use the following cheatcode:
+
+```Solidity  theme={null}
+processAllOperations();
+```
+
+This cheatcode must be called before reading the value of any encrypted variable, and performing assert statements.
+`processAllOperations` also executes any pending decryption callback.
+
+## Simulate Inputs
+
+Encrypted inputs are normally generated using Inco's JS SDK. Simulate them with the following cheatcodes:
+
+### For euint256
+
+```Solidity  theme={null}
+fakePrepareEuint256Ciphertext(uint256 value) returns (bytes memory ciphertext);
+
+// example usage
+token.transfer(bob, fakePrepareEuint256Ciphertext(1 ether));
+```
+
+### For ebool
+
+```Solidity  theme={null}
+fakePrepareEboolCiphertext(bool value) returns (bytes memory ciphertext);
+
+// example usage
+someContract.setActive(fakePrepareEboolCiphertext(true));
+```
+
+### For eaddress
+
+```Solidity  theme={null}
+fakePrepareEaddressCiphertext(address value) returns (bytes memory ciphertext);
+
+// example usage
+token.setOwner(fakePrepareEaddressCiphertext(alice));
+```
+
+## Simulate decryption
+
+Allowed accounts can request reading the values of e-variables using JS SDK. In the tests, you can read any value bypassing the access control checks.
+
+### For euint256
+
+```Solidity  theme={null}
+getUint256Value(euint256 input) (uint256);
+
+// example usage
+assertEq(getUint256Value(token.balanceOf(alice)), 9 * GWEI);
+```
+
+### For ebool
+
+```Solidity  theme={null}
+getBoolValue(ebool input) (bool);
+
+// example usage
+assertEq(getBoolValue(someContract.isActive()), true);
+```
+
+### For eaddress
+
+```Solidity  theme={null}
+getAddressValue(eaddress input) (address);
+
+// example usage
+assertEq(getAddressValue(token.owner()), alice);
+```
+
+To fully test how one of your user could see its encrypted data, we recommend combining an assertion over the decrypted value with an access control check.
+
+```Solidity  theme={null}
+// example, we check that alice can read her balance
+assertTrue(token.balanceOf(alice).isAllowed(alice));
+```
+
+────────────────────────────────────────────────────────────
+
+## Fees
+Source: https://docs.inco.org/quickstart/fees.md
+
+# Fees
+
+> Understanding Inco fees and which operations require them
+
+Inco charges fees for certain operations to ensure the security and performance of the confidential computing infrastructure. This page explains how fees work and which operations require payment.
+
+## Fee Structure
+
+Inco fees are paid in the native blockchain currency (ETH on Ethereum, etc.) and are required for operations that involve processing encrypted inputs from external sources.
+
+### Getting the Current Fee Amount
+
+Use the `inco.getFee()` function to get the current fee amount:
+
+```solidity  theme={null}
+uint256 fee = inco.getFee(); // 0.0001 ETH
+```
+
+### Paying Fees
+
+Fees can be paid in two ways: either by users including them in `msg.value`, or by having the contract pay from its own ETH balance.
+
+#### Option 1: User Pays via msg.value
+
+Fees must be paid via `msg.value` when calling functions that require them. The transaction will revert if insufficient fees are provided.
+
+```solidity  theme={null}
+require(msg.value >= inco.getFee() * ciphertextCount, "Fee Not Paid");
+```
+
+#### Option 2: Contract Pays from Balance
+
+Contracts can hold ETH in their balance to pay fees automatically, eliminating the need for users to include fees in `msg.value`.
+
+```solidity  theme={null}
+contract MyContract {
+    // Contract holds ETH to pay fees automatically
+
+    function transfer(address to, bytes memory valueInput) external {
+        // No payable modifier needed, no msg.value check required
+        euint256 value = valueInput.newEuint256(msg.sender);
+        // Contract's ETH balance is used to pay fees automatically
+        // ... rest of function
+    }
+
+    // Function to top up contract's ETH balance
+    function depositFees() external payable {
+        // Allows anyone to add ETH to contract for fee payments
+    }
+
+    // Function to withdraw excess ETH
+    function withdrawFees(uint256 amount) external onlyOwner {
+        require(address(this).balance >= amount, "Insufficient balance");
+        payable(owner()).transfer(amount);
+    }
+}
+```
+
+**Benefits of contract-paid fees:**
+
+* Better user experience - no need to calculate or send exact fees
+* Simpler function signatures - no `payable` modifier required
+* Automatic fee management by contract owner
+
+**Considerations:**
+
+* Contract owner must ensure sufficient ETH balance
+* Monitor contract balance and top up as needed
+* Consider implementing balance thresholds and alerts
+
+## Operations That Require Fees
+
+### Encrypted Input Creation and Random Generation
+
+The following operations create new encrypted handles from external ciphertexts or generate random values and require fees:
+
+| Operation                           | Fee Required   | Description                                     |
+| ----------------------------------- | -------------- | ----------------------------------------------- |
+| `e.newEuint256(bytes memory input)` | 1 fee per call | Create a new `euint256` from an encrypted input |
+| `e.newEbool(bytes memory input)`    | 1 fee per call | Create a new `ebool` from an encrypted input    |
+| `e.newEaddress(bytes memory input)` | 1 fee per call | Create a new `eaddress` from an encrypted input |
+| `e.rand()`                          | 1 fee per call | Generate a random `euint256` value              |
+| `e.randBounded(uint256)`            | 1 fee per call | Generate a bounded random `euint256` value      |
+| `e.randBounded(euint256)`           | 1 fee per call | Generate a bounded random `euint256` value      |
+
+**Example with user-paid fees:**
+
+```solidity  theme={null}
+function transfer(address to, bytes memory valueInput) external payable {
+    // Each newEuint256 call requires 1 fee
+    require(msg.value >= inco.getFee() * 1, "Fee Not Paid");
+    euint256 value = valueInput.newEuint256(msg.sender);
+    // ... rest of function
+}
+```
+
+**Example with contract-paid fees:**
+
+```solidity  theme={null}
+function transfer(address to, bytes memory valueInput) external {
+    // No fee check needed - contract pays from its balance
+    euint256 value = valueInput.newEuint256(msg.sender);
+    // ... rest of function
+}
+```
+
+**Multiple encrypted inputs:**
+
+```solidity  theme={null}
+function multiInput(bytes memory input1, bytes memory input2) external payable {
+    // Two newEuint256 calls require 2 fees (user pays)
+    require(msg.value >= inco.getFee() * 2, "Fee Not Paid");
+    euint256 value1 = input1.newEuint256(msg.sender);
+    euint256 value2 = input2.newEuint256(msg.sender);
+    // ... rest of function
+}
+```
+
+**Multiple encrypted inputs (contract pays):**
+
+```solidity  theme={null}
+function multiInput(bytes memory input1, bytes memory input2) external {
+    // Contract automatically pays 2 fees from its balance
+    euint256 value1 = input1.newEuint256(msg.sender);
+    euint256 value2 = input2.newEuint256(msg.sender);
+    // ... rest of function
+}
+```
+
+## Operations That Don't Require Fees
+
+All other Inco operations are free and don't require any fee payment:
+
+### Math Operations
+
+* `e.add`, `e.sub`, `e.mul`, `e.div`, `e.rem`
+* `e.and`, `e.or`, `e.xor`, `e.shr`, `e.shl`, `e.rotr`, `e.rotl`
+
+### Comparison Operations
+
+* `e.eq`, `e.ne`, `e.ge`, `e.gt`, `e.le`, `e.lt`
+* `e.min`, `e.max`, `e.not`
+
+### Multiplexer Operations
+
+* `e.select`
+
+### Trivial Encryption (no external input)
+
+* `e.asEuint256(uint256)` - Convert known uint256 to euint256
+* `e.asEbool(bool)` - Convert known bool to ebool
+
+### Access Control
+
+* `e.allow`, `e.allowThis`, `e.isAllowed`
+
+## Fee Best Practices
+
+### For User-Paid Fees
+
+#### Always Check Fees Before Operations
+
+```solidity  theme={null}
+function _requireFee(uint256 ciphertextCount) internal view {
+    require(msg.value >= inco.getFee() * ciphertextCount, "Insufficient fee");
+}
+```
+
+#### Calculate Ciphertext Count Accurately
+
+Count each `newEuint256`, `newEbool` or `newEaddress` call in your function to ensure you charge the correct total fee.
+
+### For Contract-Paid Fees
+
+#### Monitor Contract Balance
+
+```solidity  theme={null}
+function getContractFeeBalance() external view returns (uint256) {
+    return address(this).balance;
+}
+
+function isBalanceSufficient(uint256 requiredFees) internal view returns (bool) {
+    return address(this).balance >= requiredFees;
+}
+```
+
+#### Implement Balance Management
+
+```solidity  theme={null}
+function depositFees() external payable {
+    // Allow topping up contract balance
+}
+
+function withdrawFees(uint256 amount) external onlyOwner {
+    require(address(this).balance >= amount, "Insufficient balance");
+    require(amount <= address(this).balance - minimumReserve, "Cannot withdraw below minimum reserve");
+    payable(owner()).transfer(amount);
+}
+```
+
+### General Best Practices
+
+#### Handle Fee Changes
+
+Fees may change over time. Always use `inco.getFee()` rather than hardcoding fee amounts.
+
+#### Test Fee Requirements
+
+When testing contracts, ensure sufficient funds for both approaches:
+
+```solidity  theme={null}
+// For user-paid fees in Foundry tests
+vm.deal(user, inco.getFee() * 2); // User needs ETH for fees
+
+// For contract-paid fees in Foundry tests
+vm.deal(address(contract), inco.getFee() * 10); // Contract needs ETH balance
+```
+
+## Common Fee-Related Errors
+
+### User-Paid Fee Errors
+
+* **"Fee Not Paid"**: Transaction reverted due to insufficient `msg.value`
+* **Overpaying**: While allowed, unnecessary ETH is consumed as gas
+* **Fee changes**: Contract fails if fees increase between deployment and usage
+
+### Contract-Paid Fee Errors
+
+* **"Insufficient contract balance"**: Contract doesn't have enough ETH to pay fees
+* **"Below minimum reserve"**: Withdrawal attempts that would leave insufficient funds
+* **"Contract balance depleted"**: Functions fail when contract runs out of ETH during high usage
+
+<Note>
+  **Important:** Encrypted input operations (`newEuint256`, `newEbool`, `newEaddress`) require
+  fees because they involve off-chain decryption and processing within Inco's
+  Trusted Execution Environment (TEE). All other operations are performed
+  symbolically on-chain and are therefore free.
+</Note>
+
+────────────────────────────────────────────────────────────
+
+## Library Reference
+Source: https://docs.inco.org/quickstart/lib-reference.md
+
+# Library Reference
+
+> All functions exposed by the Inco library
+
+## Installation
+
+<CodeGroup>
+  ```bash npm theme={null}
+  npm install @inco/lightning
+  ```
+
+  ```bash yarn theme={null}
+  yarn add @inco/lightning
+  ```
+
+  ```bash bun theme={null}
+  bun add @inco/lightning
+  ```
+</CodeGroup>
+
+## Types
+
+* `ebool`: Encrypted `bool`
+* `euint256`: Encrypted `uint256`
+* `eaddress`: Encrypted `address`
+
+## Math operations
+
+All arithmetic operations return an `euint256`.
+All binary operations may use either an `euint256` or a regular `uint256` as the first or second argument, or two `euint256`s.
+
+Bitwise operations work on both `euint256` and `ebool` types, and may use either encrypted or plain values as arguments.
+
+| Name           | Function | Type   | Returns           |
+| -------------- | -------- | ------ | ----------------- |
+| Addition       | `e.add`  | Binary | euint256          |
+| Subtraction    | `e.sub`  | Binary | euint256          |
+| Multiplication | `e.mul`  | Binary | euint256          |
+| Division       | `e.div`  | Binary | euint256          |
+| Remainder      | `e.rem`  | Binary | euint256          |
+| BitAnd         | `e.and`  | Binary | euint256 or ebool |
+| BitOr          | `e.or`   | Binary | euint256 or ebool |
+| BitXor         | `e.xor`  | Binary | euint256 or ebool |
+| Shift Right    | `e.shr`  | Binary | euint256          |
+| Shift Left     | `e.shl`  | Binary | euint256          |
+| Rotate Right   | `e.rotr` | Binary | euint256          |
+| Rotate Left    | `e.rotl` | Binary | euint256          |
+
+## Comparison operations
+
+| Name                  | Function | Type   | Returns  | Notes                                                            |
+| --------------------- | -------- | ------ | -------- | ---------------------------------------------------------------- |
+| Equal                 | `e.eq`   | Binary | ebool    | Works with euint256, eaddress, and combinations with plain types |
+| Not equal             | `e.ne`   | Binary | ebool    | Works with euint256, eaddress, and combinations with plain types |
+| Greater than or equal | `e.ge`   | Binary | ebool    | euint256 only                                                    |
+| Greater than          | `e.gt`   | Binary | ebool    | euint256 only                                                    |
+| Less than or equal    | `e.le`   | Binary | ebool    | euint256 only                                                    |
+| Less than             | `e.lt`   | Binary | ebool    | euint256 only                                                    |
+| Min                   | `e.min`  | Binary | euint256 | euint256 only                                                    |
+| Max                   | `e.max`  | Binary | euint256 | euint256 only                                                    |
+| Not                   | `e.not`  | Unary  | ebool    | ebool only                                                       |
+
+## Multiplexer
+
+* `e.select(ebool, euint256, euint256) returns(euint256)`: Select between two `euint256`s based on an `ebool` condition
+* `e.select(ebool, ebool, ebool) returns(ebool)`: Select between two `ebool`s based on an `ebool` condition
+* `e.select(ebool, eaddress, eaddress) returns(eaddress)`: Select between two `eaddress`es based on an `ebool` condition
+
+## Random Functions
+
+All random functions require payment of the Inco fee.
+
+* `e.rand() returns(euint256)`: Generate a random `euint256` value
+* `e.randBounded(uint256) returns(euint256)`: Generate a random `euint256` value bounded by a `uint256` upper limit
+* `e.randBounded(euint256) returns(euint256)`: Generate a random `euint256` value bounded by an `euint256` upper limit
+
+## Inputs
+
+* `e.asEuint256(uint256) returns(euint256)`: Convert a `uint256` to an `euint256` (trivial encrypt)
+* `e.asEbool(bool) returns(ebool)`: Convert a `bool` to an `ebool` (trivial encrypt)
+* `e.asEaddress(address) returns(eaddress)`: Convert an `address` to an `eaddress` (trivial encrypt)
+* `e.newEuint256(bytes memory input) returns(euint256)`: Create a new `euint256` from a ciphertext
+* `e.newEbool(bytes memory input) returns(ebool)`: Create a new `ebool` from a ciphertext
+* `e.newEaddress(bytes memory input) returns(eaddress)`: Create a new `eaddress` from a ciphertext
+
+## Type Casting
+
+* `e.asEbool(euint256) returns(ebool)`: Cast an `euint256` to an `ebool`
+* `e.asEuint256(ebool) returns(euint256)`: Cast an `ebool` to an `euint256`
+
+## Access control
+
+* `e.allow(euint256, address)`: Allow a user to access an `euint256` value permanently
+* `e.allow(ebool, address)`: Allow a user to access an `ebool` value permanently
+* `e.allow(eaddress, address)`: Allow a user to access an `eaddress` value permanently
+* `e.allowThis(euint256)`: Allow the current contract to access an `euint256` value permanently
+* `e.allowThis(ebool)`: Allow the current contract to access an `ebool` value permanently
+* `e.allowThis(eaddress)`: Allow the current contract to access an `eaddress` value permanently
+* `e.reveal(euint256)`: Make an `euint256` value publicly accessible
+* `e.reveal(ebool)`: Make an `ebool` value publicly accessible
+* `e.reveal(eaddress)`: Make an `eaddress` value publicly accessible
+* `e.isAllowed(address, euint256) returns(bool)`: Check if a user is allowed to access an `euint256` value
+
+────────────────────────────────────────────────────────────
+
+## Build a Confidential Token
+Source: https://docs.inco.org/tutorials/confidential-token.md
+
+# Build a Confidential Token
+
+> This tutorial will guide you through creating and deploying a confidential fungible token. You can choose your preferred development environment
+
+<CardGroup>
+  <Card title="Foundry" icon="screwdriver-wrench" href="/tutorials/confidential-token/foundry">
+    Deploy using Foundry - Recommended for Solidity developers
+  </Card>
+
+  <Card title="Hardhat" icon="hammer" href="/tutorials/confidential-token/hardhat">
+    Deploy using Hardhat - Recommended for TypeScript and testing
+  </Card>
+</CardGroup>
+
+Choose your preferred development environment above to get started.
+
+────────────────────────────────────────────────────────────
+
+## Import Inco in your contract
+Source: https://docs.inco.org/tutorials/confidential-token/foundry/import-in-your-contract.md
+
+# Import Inco in your contract
+
+> Use the Inco library to enable confidentiality in your contract
+
+To start using Inco features in your contract, all you need is to add this line at the top of your solidity file:
+
+```Solidity  theme={null}
+import {e, ebool, euint256, inco} "@inco/lightning/src/Lib.sol";
+```
+
+and add this line at the top of the contract body:
+
+```Solidity  theme={null}
+using e for *;
+```
+
+Now you have access to encrypted types and operations in your contract. Here is a full example of a simple fungible token:
+
+<Note>
+  The following example is present with comments explaining the code [here](https://github.com/Inco-fhevm/lightning-rod/blob/main/contracts/src/SimpleConfidentialToken.sol) in the [lightning-rod template](https://github.com/Inco-fhevm/lightning-rod).
+</Note>
+
+```Solidity  theme={null}
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8;
+
+// This line of import is all you need to get started with Inco
+import {euint256, ebool, e, inco} from "@inco/lightning/src/Lib.sol";
+
+/// @notice a fungible token whose balances and transfer values are confidential
+contract SimpleConfidentialToken {
+    using e for euint256;
+    using e for ebool;
+    using e for uint256;
+    using e for bytes;
+    using e for address;
+
+    // since balances are represented by handles, just calling balanceOf() without having the decryption access
+    // on the corresponding handle won't allow to know the actual balance
+    mapping(address => euint256) public balanceOf;
+
+    constructor() {
+        // mint 1000 tokens to the deployer
+        // we consider this token to have 9 decimals, which is standard for confidential fungible tokens
+        // units are GWEI instead of WADs (WADs being 18 decimals, used in ERC20)
+        // `uint256(1000 * 1e9).asEuint256()` is a trivial encrypt, i.e it converts a known value into
+        // an e-type. We can also write `e.asEuint256(1000 * 1e9);`
+        balanceOf[msg.sender] = uint256(1000 * 1e9).asEuint256();
+    }
+
+    // this function is meant to be called by EOAs or smart wallets as valueInput is an encrypted amount that should
+    // be generated using @inco/js sdk
+    function transfer(address to, bytes memory valueInput) external payable returns (ebool) {
+        require(msg.value == inco.getFee(),"Fee not paid");
+        // `newInput` returns an euint256 from an encrypted input, if the encrypted input is malformed, it will return
+        // an euint256 with a value of 0. Depending on how malformed the input is, an external observer may know
+        // that the fallback 0 value has been returned. Just use the js sdk to avoid that.
+        // The second parameter of newInput will receive decryption rights on the euint256, and should be the account
+        // that created the encrypted input.
+        euint256 value = valueInput.newEuint256(msg.sender);
+        return _transfer(to, value);
+    }
+
+    // this function is meant to be called by smart contracts, as it is using an existing euint256.
+    // caller has to use `value.allow(tokenAddress)` before calling this function or it will revert.
+    function transfer(address to, euint256 value) public returns (ebool success) {
+        // always perform this check on encrypted parameters. In this case, a malicious caller could try to pass
+        // the handle corresponding of a victim's balance to deduce its value, it wouldn't revert without this check
+        // as this token contract holds allowance on the balances of all holders.
+        require(msg.sender.isAllowed(value), "SimpleConfidentialToken: unauthorized value handle access");
+
+        return _transfer(to, value);
+    }
+
+    function _transfer(address to, euint256 value) internal returns (ebool success) {
+        // check if the sender has enough balance to transfer the value
+        success = balanceOf[msg.sender].ge(value);
+        // Solidity can't revert on an insufficient balance as it has no way of knowing the actual value of the ebool.
+        // Instead, we use the multiplexer pattern, replacing the actual transferred value for a 0 (trivial encrypt)
+        // if the balance is insufficient, which is equivalent to doing nothing.
+        euint256 transferredValue = success.select(value, uint256(0).asEuint256());
+
+        // saving handles used multiple times in memory variables to save some gas
+        euint256 senderNewBalance = balanceOf[msg.sender].sub(transferredValue);
+        euint256 receiverNewBalance = balanceOf[to].add(transferredValue);
+
+        balanceOf[msg.sender] = senderNewBalance;
+        balanceOf[to] = receiverNewBalance;
+
+        // allow the sender to see its new balance
+        senderNewBalance.allow(msg.sender);
+        // allow the receiver to see its new balance
+        receiverNewBalance.allow(to);
+        // allow this contract to be able to compute over the new balances in future transfers
+        senderNewBalance.allowThis();
+        receiverNewBalance.allowThis();
+        // let the caller know if the transfer was successful
+        success.allow(msg.sender);
+    }
+}
+
+```
+
+This contract is explained in depth in the [Concepts Guide](/guide/handles).
+
+────────────────────────────────────────────────────────────
+
+## Setup
+Source: https://docs.inco.org/tutorials/confidential-token/foundry/setup.md
+
+# Setup
+
+> Setup your repo
+
+## Using the lightning-rod template (recommended)
+
+We recommend using our [template](https://github.com/Inco-fhevm/lightning-rod/tree/main) which comes with foundry already setup.
+
+```bash  theme={null}
+git clone git@github.com:Inco-fhevm/lightning-rod.git
+cd lightning-rod
+bun install
+```
+
+Using the template, you may want to skip to the [cheatcodes reference](/quickstart/cheatcodes-reference).
+
+## Or setup manually
+
+<Warning>
+  You do not need to follow these steps if you are using the lightning-rod template.
+</Warning>
+
+Follow these steps to add inco to your existing project, or manually setup a new one.
+
+### Download the inco libraries
+
+Inco uses npm packages to provide its solidity library.
+
+```bash  theme={null}
+bun add @inco/lightning
+```
+
+Alternatively, you can use npm/yarn/pnpm.
+
+### Setup remappings
+
+Create a file `remappings.txt` at the root of your contracts directory.
+
+```bash  theme={null}
+touch remappings.txt
+```
+
+Edit your remappings paths according to your setup.
+
+```txt  theme={null}
+forge-std/=your/path/to/forge-std/src/
+ds-test/=your/path/to/ds-test/src/
+@inco/=path/to/your/node_modules/@inco/
+@openzeppelin/=path/to/your/node_modules/@openzeppelin/
+```
+
+Due to how solidity imports and remappings work, your remappings have to follow
+the idiomatic form. Here are the requirements so your project compiles while using inco:
+
+* left to the `=` sign, have the following names
+  * `forge-std/`
+  * `ds-test/`
+  * `@inco/`
+  * `@openzeppelin/`
+* right to the `=` sign, have the path to the corresponding library
+  * `forge-std/` should point to the `src/` directory of your local `forge-std` library
+  * `ds-test/` should point to the `src/` directory of your local `ds-test` library
+  * `@inco/` should point to the `@inco` directory in your `node_modules` directory, and not to the `@inco/lightning` or `@inco/shared` directories
+  * In the same way `@openzeppelin/` should point to the `@openzeppelin` directory in your `node_modules` directory
+
+To simplify this process, we recommend using bun/npm to import all the dependencies (including `foundry-std` and `ds-test`) like so:
+
+```bash  theme={null}
+bun add  @inco/lightning https://github.com/dapphub/ds-test https://github.com/foundry-rs/forge-std @openzeppelin/contracts
+```
+
+and using this remapping file (supposing that your `node_modules` sit one directory up from your contracts directory):
+
+```txt  theme={null}
+@openzeppelin/=../node_modules/@openzeppelin/
+forge-std/=../node_modules/forge-std/src/
+ds-test/=../node_modules/ds-test/src/
+@inco/=../node_modules/@inco/
+```
+
+────────────────────────────────────────────────────────────
+
+## Test your contract
+Source: https://docs.inco.org/tutorials/confidential-token/foundry/test-your-contract.md
+
+# Test your contract
+
+> Test your contract in solidity, using Inco cheatcodes
+
+In the package that comes the Inco library, an extension to the usual `Test` Foundry contract is provided.\
+You can import it like this:
+
+```Solidity  theme={null}
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8;
+
+import {IncoTest} from "@inco/lightning/src/test/IncoTest.sol";
+
+contract YourTest is IncoTest {
+    function testSomething() public {
+        // Your test code here
+    }
+}
+```
+
+`IncoTest` extends Foundry's `Test` contract, and exposes useful Inco-specific cheatcodes to test your contract.\
+If you are extending the `setUp` function, remember to call `super.setUp()` at the beginning of your function.
+
+## Example
+
+<Note>
+  The following example is present with comments explaining the code [here](https://github.com/Inco-fhevm/lightning-rod/blob/main/contracts/src/test/TestSimpleConfidentialToken.t.sol) in the [lightning-rod template](https://github.com/Inco-fhevm/lightning-rod).
+</Note>
+
+```Solidity  theme={null}
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8;
+
+import {SimpleConfidentialToken} from "../SimpleConfidentialToken.sol";
+import {IncoTest} from "@inco/lightning/src/test/IncoTest.sol";
+import {GWEI} from "@inco/lightning/src/shared/TypeUtils.sol"; // 1 GWEI = 1e9
+import {console} from "forge-std/console.sol";
+import {inco, euint256, e} from "@inco/lightning/src/Lib.sol";
+
+// IncoTest extends forge-std's Test
+contract TestSimpleConfidentialToken is IncoTest {
+    SimpleConfidentialToken token;
+
+    function setUp() public override {
+        // always call the parent setUp() function, which deploys the mocked Inco infrastructure
+        super.setUp();
+        token = new SimpleConfidentialToken();
+        vm.deal(address(this), inco.getFee());
+
+        // Transfer 10 GWEI from the test contract (which received the initial mint) to Alice
+        // The test contract can use the euint256 version of transfer since it's a contract
+        euint256 transferAmount = e.asEuint256(10 * GWEI);
+        // Allow the test contract (sender) to use this value for the authorization check
+        // and allow the token contract to use this value in computations
+        e.allow(transferAmount, address(this));
+        e.allow(transferAmount, address(token));
+        token.transfer(alice, transferAmount);
+        processAllOperations();
+
+        // Verify Alice's balance
+        vm.prank(alice);
+        uint256 decryptedAliceBalance = getUint256Value(token.balanceOf(alice));
+        assertEq(decryptedAliceBalance, 10 * GWEI);
+    }
+
+    function testTransfer() public {
+        vm.deal(address(alice), inco.getFee());
+        bytes memory ciphertext = fakePrepareEuint256Ciphertext(1 * GWEI, alice, address(token));
+        vm.startPrank(alice);
+        token.transfer{value: inco.getFee()}(bob, ciphertext);
+        vm.stopPrank();
+        processAllOperations();
+        // Inco processes the operations over encrypted variables asynchronously offchain.
+        // call processAllOperations() to simulate this offchain processing, which will assign to each e-variable
+        // its encrypted value. if you don't call this function and try to simulate a decrypt on a handle
+        // resulting from an operation, it will revert.
+        // `getUint256Value` is a cheatcode returning the decrypted value of an euint256, without checking
+        // any access rights, it is useful in tests and doesn't exist in prod.
+        uint256 decryptedBobBalance = getUint256Value(token.balanceOf(bob));
+        uint256 decryptedAliceBalance = getUint256Value(token.balanceOf(alice));
+        assertEq(decryptedBobBalance, 1 * GWEI);
+        assertEq(decryptedAliceBalance, 9 * GWEI);
+    }
+}
+
+```
+
+Once you are happy with the state of your contract, you can deploy it as-is without any changes and Inco will react to its ops (as long as you are on a supported network, currently only Base-Sepolia).
+
+Read on for the reference of the available cheatcodes.
+
+────────────────────────────────────────────────────────────
+
+## Setting up Environment for Hardhat
+Source: https://docs.inco.org/tutorials/confidential-token/hardhat.md
+
+# Setting up Environment for Hardhat
+
+> This is a quick start guide for deploying and understanding a confidential ERC20 using the [Hardhat template](https://github.com/Inco-fhevm/inco-lite-template).
+
+<Steps>
+  <Step title="Prerequisites">
+    We recommend installing nvm (Node Version Manager) first and then install Node.js with nvm.
+
+    * For Linux: The official Linux version can be found [here](https://github.com/nvm-sh/nvm) or follow [this tutorial](https://tecadmin.net/how-to-install-nvm-on-ubuntu-20-04/).
+    * For Windows, follow the [Readme guide](https://github.com/coreybutler/nvm-windows/blob/master/README.md#installation--upgrades).
+    * For Mac, you can follow this [tutorial](https://tecadmin.net/install-nvm-macos-with-homebrew/).
+
+    Install Node.js:
+
+    ```bash  theme={null}
+    nvm install node
+    ```
+
+    Install pnpm:
+
+    ```bash  theme={null}
+    npm install -g pnpm
+    ```
+  </Step>
+
+  <Step title="Setting up your environment">
+    1. Clone the template project:
+
+    ```bash  theme={null}
+    git clone https://github.com/Inco-fhevm/inco-lite-template.git
+    cd inco-lite-template
+    ```
+
+    2. Install dependencies:
+
+    ```bash  theme={null}
+    pnpm install
+    ```
+
+    3. Set up `.env` file. You can use the values below, taken from the README:
+
+    ```bash  theme={null}
+    # This should be a private key funded with native tokens.
+    PRIVATE_KEY_ANVIL="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+    PRIVATE_KEY_BASE_SEPOLIA=""
+
+    # This should be a seed phrase used to test functionalities with different accounts.  
+    # You can send funds from the main wallet to this whenever needed.
+    SEED_PHRASE="garden cage click scene crystal fat message twice rubber club choice cool"
+
+    # This should be an RPC URL provided by a proper provider  
+    # that supports the eth_getLogs() and eth_getFilteredLogs() methods.
+    LOCAL_CHAIN_RPC_URL="http://localhost:8545"
+    BASE_SEPOLIA_RPC_URL="https://base-sepolia-rpc.publicnode.com"
+    ```
+
+    <Note>
+      If you don't have a mnemonic, you can generate one using [this website](https://iancoleman.io/bip39/) or use our default test accounts.
+      We recommend using RPC providers instead of public endpoints for better log access.
+    </Note>
+
+    4. Compile contracts:
+
+    ```bash  theme={null}
+    pnpm hardhat compile
+    ```
+
+    5. Run a local Node
+
+    <Note>
+      The current instructions will run a local node and a local covalidator. If you are using this template against another network, e.g. Base Sepolia, skip this step.
+    </Note>
+
+    ```bash  theme={null}
+    docker compose up
+    ```
+
+    6. Run tests:
+
+    ```bash  theme={null}
+    pnpm hardhat test --network anvil
+    ```
+  </Step>
+</Steps>
+
+## Deploying on Base Sepolia
+
+After setting the `PRIVATE_KEY_BASE_SEPOLIA` and `BASE_SEPOLIA_RPC_URL` fields in the `.env` file, run the following command:
+
+```bash  theme={null}
+pnpm hardhat ignition deploy ./ignition/modules/ConfidentialToken.ts --network baseSepolia
+```
+
+Then, you can make sure tests still pass with:
+
+```bash  theme={null}
+pnpm hardhat test --network baseSepolia
+```
+
+## Next Step
+
+Now that you have deployed and tested the contract, let's understand how it works.
+
+────────────────────────────────────────────────────────────
+
+## Complete Contract Implementation
+Source: https://docs.inco.org/tutorials/confidential-token/hardhat/complete-contract.md
+
+# Complete Contract Implementation
+
+> Full implementation of the confidential ERC20 token
+
+Here's the complete implementation of the confidential ERC20 token contract. You can find this code in `ConfidentialERC20.sol` if you're using the Hardhat template.
+
+```Solidity  theme={null}
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.28;
+
+import {inco, e, ebool, euint256} from "@inco/lightning/src/Lib.sol";
+import {asBool} from "@inco/lightning/src/shared/TypeUtils.sol";
+import {DecryptionAttestation} from "@inco/lightning/src/lightning-parts/DecryptionAttester.types.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
+
+contract ConfidentialERC20 is Ownable2Step {
+    // Errors
+    error InsufficientFees();
+
+    // Events
+    event Transfer(address indexed from, address indexed to, euint256 amount);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        euint256 amount
+    );
+    event Mint(address indexed to, uint256 amount);
+    event EncryptedMint(address indexed to, euint256 amount);
+
+    // State variables
+    euint256 public totalSupply;
+    string public _name;
+    string public _symbol;
+    uint8 public constant decimals = 18;
+
+    // Mappings for balances and allowances
+    mapping(address => euint256) internal balances;
+    mapping(address => mapping(address => euint256)) internal allowances;
+
+    // Constructor to set the token name, symbol, and owner
+    constructor() Ownable(msg.sender) {
+        _name = "Confidential USD";
+        _symbol = "cUSD";
+    }
+
+    // Helper functions
+    function _requireFee() internal view {
+        if (msg.value < inco.getFee()) revert InsufficientFees();
+    }
+
+    // Mint function to create tokens and add to the owner's balance
+    function mint(uint256 mintAmount) public virtual onlyOwner {
+        euint256 amount = e.asEuint256(mintAmount);
+        balances[owner()] = e.add(balances[owner()], amount);
+        e.allow(balances[owner()], address(this));
+        e.allow(balances[owner()], owner());
+
+        totalSupply = e.add(totalSupply, amount);
+        e.reveal(totalSupply);
+        emit Mint(owner(), mintAmount);
+    }
+
+    // Encrypted mint function to create tokens and add to the sender's balance
+    function encryptedMint(
+        bytes calldata encryptedAmount
+    ) public payable virtual /*onlyOwner*/ {
+        _requireFee();
+        euint256 amount = e.newEuint256(encryptedAmount, msg.sender);
+        e.allow(amount, address(this));
+        if(euint256.unwrap(balances[msg.sender]) == bytes32(0)) {
+            balances[msg.sender] = amount;
+        } else {
+            balances[msg.sender] = e.add(balances[msg.sender], amount);
+        }
+        e.allow(balances[msg.sender], address(this));
+        e.allow(balances[msg.sender], owner());
+        e.allow(balances[msg.sender], msg.sender);
+
+        totalSupply = e.add(totalSupply, amount);
+        e.reveal(totalSupply);
+        emit EncryptedMint(msg.sender, amount);
+    }
+
+    // Transfer function for EOAs using encrypted inputs
+    function transfer(
+        address to,
+        bytes calldata encryptedAmount
+    ) public payable virtual returns (bool) {
+        _requireFee();
+        transfer(
+            to,
+            e.newEuint256(encryptedAmount, msg.sender)
+        );
+        return true;
+    }
+
+    // Transfer function for contracts
+    function transfer(
+        address to,
+        euint256 amount
+    ) public virtual returns (bool) {
+        e.allow(amount, address(this));
+        ebool canTransfer = e.ge(balances[msg.sender], amount);
+
+        _transfer(msg.sender, to, amount, canTransfer);
+        return true;
+    }
+
+    // Retrieves the balance handle of a specified wallet
+    function balanceOf(address wallet) public view virtual returns (euint256) {
+        return balances[wallet];
+    }
+
+    // Retrieves the total supply handle
+    function getTotalSupply() public view virtual returns (euint256) {
+        return totalSupply;
+    }
+
+    // Approve function for EOAs with encrypted inputs
+    function approve(
+        address spender,
+        bytes calldata encryptedAmount
+    ) public payable virtual returns (bool) {
+        _requireFee();
+        approve(spender, e.newEuint256(encryptedAmount, msg.sender));
+        return true;
+    }
+
+    // Approve function for contracts
+    function approve(
+        address spender,
+        euint256 amount
+    ) public virtual returns (bool) {
+        _approve(msg.sender, spender, amount);
+        emit Approval(msg.sender, spender, amount);
+        return true;
+    }
+
+    // Internal function to handle allowance approvals
+    function _approve(
+        address owner,
+        address spender,
+        euint256 amount
+    ) internal virtual {
+        allowances[owner][spender] = amount;
+        e.allow(amount, address(this));
+        e.allow(amount, owner);
+        e.allow(amount, spender);
+    }
+
+    // Retrieves the allowance handle for a spender
+    function allowance(
+        address owner,
+        address spender
+    ) public view virtual returns (euint256) {
+        return _allowance(owner, spender);
+    }
+
+    // Internal function to retrieve an allowance handle
+    function _allowance(
+        address owner,
+        address spender
+    ) internal view virtual returns (euint256) {
+        return allowances[owner][spender];
+    }
+
+    // TransferFrom function for EOAs with encrypted inputs
+    function transferFrom(
+        address from,
+        address to,
+        bytes calldata encryptedAmount
+    ) public payable virtual returns (bool) {
+        _requireFee();
+        transferFrom(
+            from,
+            to,
+            e.newEuint256(encryptedAmount, msg.sender)
+        );
+        return true;
+    }
+
+    // TransferFrom function for contracts
+    function transferFrom(
+        address from,
+        address to,
+        euint256 amount
+    ) public virtual returns (bool) {
+        e.allow(amount, address(this));
+
+        ebool isTransferable = _updateAllowance(from, msg.sender, amount);
+        _transfer(from, to, amount, isTransferable);
+        return true;
+    }
+
+    function _updateAllowance(
+        address owner,
+        address spender,
+        euint256 amount
+    ) internal virtual returns (ebool) {
+        euint256 currentAllowance = _allowance(owner, spender);
+        ebool allowedTransfer = e.ge(currentAllowance, amount);
+        ebool canTransfer = e.ge(balances[owner], amount);
+        ebool isTransferable = e.select(
+            canTransfer,
+            allowedTransfer,
+            e.asEbool(false)
+        );
+        _approve(
+            owner,
+            spender,
+            e.select(
+                isTransferable,
+                e.sub(currentAllowance, amount),
+                currentAllowance
+            )
+        );
+        return isTransferable;
+    }
+
+    // Internal transfer function for encrypted token transfer
+    function _transfer(
+        address from,
+        address to,
+        euint256 amount,
+        ebool isTransferable
+    ) internal virtual {
+        euint256 transferValue = e.select(
+            isTransferable,
+            amount,
+            e.asEuint256(0)
+        );
+
+        if(euint256.unwrap(balances[to]) == bytes32(0)) {
+            balances[to] = transferValue;
+        } else {
+            balances[to] = e.add(balances[to], transferValue);
+        }
+
+        e.allow(balances[to], address(this));
+        e.allow(balances[to], to);
+
+        balances[from] = e.sub(balances[from], transferValue);
+        e.allow(balances[from], address(this));
+        e.allow(balances[from], from);
+
+        emit Transfer(from, to, transferValue);
+    }
+
+}
+```
+
+## Contract Structure
+
+{" "}
+
+<Card title="Imports" icon="file-import">
+  * Inco libraries for encryption - OpenZeppelin for ownership management
+</Card>
+
+<Card title="State" icon="database">
+  * Public token details - Encrypted total supply - Encrypted balances and
+    allowances
+</Card>
+
+<Card title="Functions" icon="code">
+  * Standard ERC20 interface - Encrypted variants for privacy - Internal helpers
+</Card>
+
+## Deployment
+
+To deploy the contract using Hardhat Ignition:
+
+1. Create a deployment module in `ignition/modules/ConfidentialToken.ts`:
+
+```typescript  theme={null}
+import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
+
+const ConfidentialERC20Module = buildModule("ConfidentialERC20Module", (m) => {
+  const confidentialERC20Module = m.contract("ConfidentialERC20");
+  return { confidentialERC20Module };
+});
+
+export default ConfidentialERC20Module;
+```
+
+2. Deploy using the following command:
+
+```bash  theme={null}
+pnpm hardhat ignition deploy ./ignition/modules/ConfidentialToken.ts --network baseSepolia
+```
+
+3. Run tests to verify the deployment:
+
+```bash  theme={null}
+pnpm hardhat test --network baseSepolia
+```
+
+<Card>
+  The contract will be deployed with: - Name: "Confidential USD" - Symbol:
+  "cUSD" - Decimals: 18 - Owner: The deploying address (msg.sender)
+</Card>
+
+<Note>
+  Make sure to save the deployed contract address for future interactions.
+  You'll need it when integrating with your frontend or other contracts.
+</Note>
+
+────────────────────────────────────────────────────────────
+
+## Understanding the Confidential ERC-20
+Source: https://docs.inco.org/tutorials/confidential-token/hardhat/contract-details.md
+
+# Understanding the Confidential ERC-20
+
+> Deep dive into the confidential token implementation
+
+We will be creating a confidential ERC20 contract that enables:
+
+* Minting new tokens
+* Transferring tokens between accounts
+* Managing token allowances
+* Keeping all amounts encrypted
+* Using encrypted minting and transfers that require Inco execution fees
+
+<Steps>
+  <Step title="Setting up Contract">
+    <Card title="Contract Setup" icon="file-contract" href="/tutorials/confidential-token/hardhat/contract-setup">
+      Learn how to set up the basic contract structure
+    </Card>
+  </Step>
+
+  <Step title="Defining Functions">
+    <Card title="Contract Functions" icon="code" href="/tutorials/confidential-token/hardhat/contract-functions">
+      Understand the core functionality implementation
+    </Card>
+  </Step>
+
+  <Step title="Complete Implementation">
+    <Card title="Complete Contract" icon="file-code" href="/tutorials/confidential-token/hardhat/complete-contract">
+      See the full contract implementation
+    </Card>
+  </Step>
+</Steps>
+
+────────────────────────────────────────────────────────────
+
+## Contract Functions
+Source: https://docs.inco.org/tutorials/confidential-token/hardhat/contract-functions.md
+
+# Contract Functions
+
+> Understanding the core functionality of the confidential token
+
+## Constructor
+
+The constructor sets up the initial token configuration:
+
+```Solidity  theme={null}
+constructor() Ownable(msg.sender) {
+    _name = "Confidential USD";
+    _symbol = "cUSD";
+}
+```
+
+## Minting Tokens
+
+There are two minting functions for different use cases, plus a helper for enforcing fees:
+
+```Solidity  theme={null}
+// Helper to enforce that the caller pays the Inco fee
+function _requireFee() internal view {
+    if (msg.value < inco.getFee()) revert InsufficientFees();
+}
+
+// Standard minting with plaintext amount (owner only)
+function mint(uint256 mintAmount) public virtual onlyOwner {
+    euint256 amount = e.asEuint256(mintAmount);
+    balances[owner()] = e.add(balances[owner()], amount);
+    e.allow(balances[owner()], address(this));
+    e.allow(balances[owner()], owner());
+    
+    totalSupply = e.add(totalSupply, amount);
+    e.reveal(totalSupply);
+    emit Mint(owner(), mintAmount);
+}
+
+// Minting with encrypted amount (fee required)
+function encryptedMint(
+    bytes calldata encryptedAmount
+) public payable virtual /*onlyOwner*/ {
+    _requireFee();
+    euint256 amount = e.newEuint256(encryptedAmount, msg.sender);
+    e.allow(amount, address(this));
+    if(euint256.unwrap(balances[msg.sender]) == bytes32(0)) {
+        balances[msg.sender] = amount;
+    } else {
+        balances[msg.sender] = e.add(balances[msg.sender], amount);
+    }
+    e.allow(balances[msg.sender], address(this));
+    e.allow(balances[msg.sender], owner());
+    e.allow(balances[msg.sender], msg.sender);
+
+    totalSupply = e.add(totalSupply, amount);
+    e.reveal(totalSupply);
+    emit EncryptedMint(msg.sender, amount);
+}
+```
+
+<Note>
+  The `encryptedMint` function accepts encrypted amounts for enhanced privacy and requires the caller to pay the Inco fee.
+</Note>
+
+## Transfer Functions
+
+Two versions of transfer are available, with a fee required for the encrypted entrypoint:
+
+```Solidity  theme={null}
+// For EOAs using encrypted inputs
+function transfer(
+    address to,
+    bytes calldata encryptedAmount
+) public payable virtual returns (bool) {
+    _requireFee();
+    transfer(
+        to,
+        e.newEuint256(encryptedAmount, msg.sender)
+    );
+    return true;
+}
+
+// For contract interactions
+function transfer(
+    address to,
+    euint256 amount
+) public virtual returns (bool) {
+    e.allow(amount, address(this));
+    ebool canTransfer = e.ge(balances[msg.sender], amount);
+    _transfer(msg.sender, to, amount, canTransfer);
+    return true;
+}
+```
+
+## Approval System
+
+The approval system allows delegated spending:
+
+```Solidity  theme={null}
+// Approve for EOAs (encrypted amount, fee required)
+function approve(
+    address spender,
+    bytes calldata encryptedAmount
+) public payable virtual returns (bool) {
+    _requireFee();
+    approve(spender, e.newEuint256(encryptedAmount, msg.sender));
+    return true;
+}
+
+// Approve for contracts
+function approve(
+    address spender,
+    euint256 amount
+) public virtual returns (bool) {
+    _approve(msg.sender, spender, amount);
+    emit Approval(msg.sender, spender, amount);
+    return true;
+}
+
+// Internal approval logic
+function _approve(
+    address owner,
+    address spender,
+    euint256 amount
+) internal virtual {
+    allowances[owner][spender] = amount;
+    e.allow(amount, address(this));
+    e.allow(amount, owner);
+    e.allow(amount, spender);
+}
+```
+
+## TransferFrom Functions
+
+For spending approved tokens, the encrypted entrypoint also requires a fee:
+
+```Solidity  theme={null}
+// TransferFrom for EOAs
+function transferFrom(
+    address from,
+    address to,
+    bytes calldata encryptedAmount
+) public payable virtual returns (bool) {
+    _requireFee();
+    transferFrom(
+        from,
+        to,
+        e.newEuint256(encryptedAmount, msg.sender)
+    );
+    return true;
+}
+
+// TransferFrom for contracts
+function transferFrom(
+    address from,
+    address to,
+    euint256 amount
+) public virtual returns (bool) {
+    e.allow(amount, address(this));
+    ebool isTransferable = _updateAllowance(from, msg.sender, amount);
+    _transfer(from, to, amount, isTransferable);
+    return true;
+}
+```
+
+## View Functions
+
+Functions to check balances and allowances:
+
+```Solidity  theme={null}
+// Get encrypted balance
+function balanceOf(address wallet) public view virtual returns (euint256) {
+    return balances[wallet];
+}
+
+// Get encrypted total supply
+function getTotalSupply() public view virtual returns (euint256) {
+    return totalSupply;
+}
+
+// Get encrypted allowance
+function allowance(
+    address owner,
+    address spender
+) public view virtual returns (euint256) {
+    return _allowance(owner, spender);
+}
+```
+
+## Next Steps
+
+<p title="Complete Implementation" icon="file-code" href="/tutorials/confidential-token/hardhat/complete-contract">
+  See how all these functions come together in the complete contract
+</p>
+
+────────────────────────────────────────────────────────────
+
+## Setting up the Contract
+Source: https://docs.inco.org/tutorials/confidential-token/hardhat/contract-setup.md
+
+# Setting up the Contract
+
+> Learn how to set up the basic structure of a confidential ERC20 token
+
+## Import Required Libraries
+
+First, we need to import the necessary contracts and libraries:
+
+```Solidity  theme={null}
+pragma solidity ^0.8.28;
+
+import {inco, e, ebool, euint256} from "@inco/lightning/src/Lib.sol";
+import {asBool} from "@inco/lightning/src/shared/TypeUtils.sol";
+import {DecryptionAttestation} from "@inco/lightning/src/lightning-parts/DecryptionAttester.types.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
+```
+
+## Contract Definition
+
+Our confidential ERC20 contract inherits from `Ownable2Step`, which provides secure ownership management:
+
+```Solidity  theme={null}
+contract ConfidentialERC20 is Ownable2Step {
+    // Contract implementation will go here
+}
+```
+
+<Note>
+  The `Ownable2Step` contract from OpenZeppelin sets the owner in the constructor, allowing only the owner to view all users' balances.
+</Note>
+
+## State Variables
+
+We need to define our state variables, including encrypted balances and allowances:
+
+```Solidity  theme={null}
+euint256 public totalSupply;
+string public _name;
+string public _symbol;
+uint8 public constant decimals = 18;
+
+// Mappings for balances and allowances
+mapping(address => euint256) internal balances;
+mapping(address => mapping(address => euint256)) internal allowances;
+```
+
+<Note>
+  Notice that `balances`, `allowances`, and `totalSupply` use the `euint256` type for encrypted storage.
+</Note>
+
+## Events
+
+Define the standard ERC20 events plus custom events for minting:
+
+```Solidity  theme={null}
+// Errors
+error InsufficientFees();
+
+// Events for Transfer, Approval, and Mint
+event Transfer(address indexed from, address indexed to, euint256 amount);
+event Approval(
+    address indexed owner,
+    address indexed spender,
+    euint256 amount
+);
+event Mint(address indexed to, uint256 amount);
+event EncryptedMint(address indexed to, euint256 amount);
+```
+
+## Understanding the Structure
+
+<Card title="Encrypted Types" icon="lock">
+  `euint256` is used for encrypted integers, ensuring balance privacy
+</Card>
+
+<Card title="Access Control" icon="user-shield">
+  `Ownable2Step` provides secure ownership management
+</Card>
+
+<Card title="Events" icon="bell">
+  Events enable tracking transfers and approvals without revealing amounts
+</Card>
+
+## Next Steps
+
+<p title="Defining Functions" icon="code" href="/tutorials/confidential-token/hardhat/contract-functions">
+  Continue to learn how to implement the core token functionality
+</p>
+
+────────────────────────────────────────────────────────────

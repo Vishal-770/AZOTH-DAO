@@ -1,0 +1,46 @@
+{
+  "name": "Azoth DAO AI Advisor",
+  "description": "Privacy-preserving AI assistant for DAO proposal analysis and governance advice, powered by Nillion",
+  "url": "http://localhost:3001",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false,
+    "stateTransitionHistory": true
+  },
+  "authentication": {
+    "schemes": ["x402"]
+  },
+  "defaultInputModes": ["text"],
+  "defaultOutputModes": ["text"],
+  "skills": [
+    {
+      "id": "proposal-analysis",
+      "name": "Proposal Analysis",
+      "description": "Analyze DAO proposals for risks, benefits, and governance implications",
+      "tags": ["dao", "governance", "proposals", "privacy", "ai", "nillion"],
+      "examples": [
+        "Analyze this proposal for potential risks",
+        "What are the governance implications of this funding request?",
+        "Should I vote for or against this proposal?",
+        "What questions should the community discuss about this proposal?"
+      ]
+    },
+    {
+      "id": "governance-advice",
+      "name": "Governance Advice",
+      "description": "Get advice on DAO governance best practices",
+      "tags": ["dao", "governance", "voting", "quadratic-voting"],
+      "examples": [
+        "How does quadratic voting work in Azoth DAO?",
+        "What is ragequit and when should I use it?",
+        "How can I participate in governance?"
+      ]
+    }
+  ],
+  "privacy": {
+    "dataStorage": "Encrypted with nilDB",
+    "inference": "Processed in TEE with nilAI",
+    "payment": "Pay-per-query with x402"
+  }
+}

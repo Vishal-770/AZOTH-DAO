@@ -1,0 +1,35 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "Azoth DAO AI Advisor",
+  "description": "A privacy-preserving DAO proposal AI advisor powered by Nillion. Uses nilAI for secure LLM inference in TEE, nilDB for encrypted data storage, and x402 for pay-per-query payments. All governance conversations are encrypted and processed securely.",
+  "image": "https://nillion.com/logo.png",
+  "endpoints": [
+    {
+      "name": "A2A",
+      "endpoint": "http://localhost:3001/.well-known/agent-card.json",
+      "version": "0.3.0"
+    },
+    {
+      "name": "REST",
+      "endpoint": "http://localhost:3001/api/chat",
+      "version": "1.0.0"
+    },
+    {
+      "name": "DID",
+      "endpoint": "did:nil:02e21a8f257fe39c8ecc82c929ced05ee4692d5763de2d382a63a3e6e645d05cec",
+      "version": "v1"
+    }
+  ],
+  "registrations": [
+    {
+      "agentId": 7473,
+      "agentRegistry": "eip155:11155111:0x8004a6090Cd10A7288092483047B097295Fb8847"
+    }
+  ],
+  "supportedTrust": [
+    "reputation",
+    "tee-attestation"
+  ],
+  "transactionHash": "0xeecee8b54d5d161bd04a80b72bdacaa0dbcc1cda360c6cca2e1e12e235c629a6",
+  "registeredAt": "2026-01-12T10:12:49.629Z"
+}
