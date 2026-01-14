@@ -22,7 +22,7 @@ const cinzel = Cinzel({
 });
 
 export const metadata: Metadata = {
-  title: "Azoth DAO Interface ",
+  title: "Azoth DAO",
   description: "Privacy-preserving DAO governance ",
 };
 
