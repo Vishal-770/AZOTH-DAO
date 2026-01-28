@@ -90,7 +90,7 @@ const HeroSection: React.FC = () => {
             <span className="text-[#00f5ff] mr-2">
                  <Lock className="inline w-3 h-3 mb-1" /> {`>>`}
             </span> 
-            The first privacy-first DAO. Decoupling economic stake from governance power using Soulbound tokens and Encryption.
+          Azoth Protocol delivers confidential governance with end-to-end encryption, powered by Inco’s TEE technology to keep balances, votes, and proposals private.
              
           </p>
         </div>
