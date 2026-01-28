@@ -90,7 +90,7 @@ const HeroSection: React.FC = () => {
             <span className="text-[#00f5ff] mr-2">
                  <Lock className="inline w-3 h-3 mb-1" /> {`>>`}
             </span> 
-            The first privacy-first DAO. Decoupling economic stake from governance power using Soulbound tokens and Fully Homomorphic Encryption.
+            The first privacy-first DAO. Decoupling economic stake from governance power using Soulbound tokens and Encryption.
              <span className="text-[#00f5ff] animate-pulse">_</span>
           </p>
         </div>
